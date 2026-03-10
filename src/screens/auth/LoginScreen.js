@@ -21,7 +21,7 @@ import { InlineSpinner } from '../../components/LoadingSpinner';
 import { checkAuthRateLimit } from '../../utils/rateLimiter';
 
 const LoginScreen = ({ navigation }) => {
-  const { login, loading, authError, clearError } = useAuthStore();
+  const { login, resetPassword, loading, authError, clearError } = useAuthStore();
   const { isDark, colors } = useTheme();
 
   const [email, setEmail] = useState('');
@@ -364,7 +364,25 @@ const LoginScreen = ({ navigation }) => {
             </View>
 
             {/* Forgot Password */}
-            <TouchableOpacity style={styles.forgotBtn} onPress={() => Alert.alert('Reset Password', 'Password reset email sent to ' + email)}>
+            <TouchableOpacity
+              style={styles.forgotBtn}
+              onPress={async () => {
+                const trimmedEmail = email.trim().toLowerCase();
+                if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+                  Alert.alert('Enter Your Email', 'Please enter your email address above, then tap "Forgot password?" again.');
+                  return;
+                }
+                const result = await resetPassword(trimmedEmail);
+                if (result.success) {
+                  Alert.alert(
+                    'Check Your Inbox',
+                    `We've sent a password reset link to ${trimmedEmail}. Check your spam folder if you don't see it.`
+                  );
+                } else {
+                  Alert.alert('Reset Failed', result.error);
+                }
+              }}
+            >
               <Text style={[styles.forgotText, { color: COLORS.primary }]}>
                 Forgot password?
               </Text>

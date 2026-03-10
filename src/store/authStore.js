@@ -101,6 +101,17 @@ const useAuthStore = create((set, get) => ({
     }
   },
 
+  // Reset password
+  resetPassword: async (email) => {
+    try {
+      await auth.sendPasswordResetEmail(sanitizeEmail(email));
+      return { success: true };
+    } catch (error) {
+      const message = mapFirebaseAuthError(error.code);
+      return { success: false, error: message };
+    }
+  },
+
   // Logout
   logout: async () => {
     set({ loading: true });
