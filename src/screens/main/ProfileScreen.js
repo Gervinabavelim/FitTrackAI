@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import useAuthStore from '../../store/authStore';
 import useWorkoutStore from '../../store/workoutStore';
 import useTheme from '../../hooks/useTheme';
+import useHaptics from '../../hooks/useHaptics';
+import { useToast } from '../../contexts/ToastContext';
 import { COLORS, FITNESS_LEVELS, FITNESS_GOALS } from '../../utils/constants';
 import { calculateBMI, idealWeightRange } from '../../utils/calculations';
 import { cancelAllNotifications, setupNotifications } from '../../services/notificationService';
@@ -24,6 +26,8 @@ const ProfileScreen = () => {
   const { user, profile, updateProfile, logout, loading } = useAuthStore();
   const { workouts, streak, totalCalories, reset: resetWorkoutStore } = useWorkoutStore();
   const { isDark, colors, toggleTheme } = useTheme();
+  const haptics = useHaptics();
+  const { showToast } = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
@@ -92,9 +96,11 @@ const ProfileScreen = () => {
       fitnessGoal: editData.fitnessGoal || profile?.fitnessGoal,
     });
     if (result.success) {
+      haptics.success();
+      showToast('Profile updated!', 'success');
       setIsEditing(false);
     } else {
-      Alert.alert('Update Failed', result.error || 'Please try again.');
+      showToast(result.error || 'Update failed. Please try again.', 'error');
     }
   };
 
@@ -133,7 +139,7 @@ const ProfileScreen = () => {
 
   const inputStyle = (field) => ({
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1.5,
     borderColor: errors[field] ? COLORS.danger : (isDark ? COLORS.dark.border : COLORS.light.border),
     backgroundColor: isDark ? COLORS.dark.inputBg : COLORS.light.inputBg,
@@ -199,7 +205,7 @@ const ProfileScreen = () => {
         <View style={styles.statsRow}>
           {[
             { label: 'Workouts', value: workouts.length, icon: 'fitness-outline', color: COLORS.primary },
-            { label: 'Streak', value: `${streak}🔥`, icon: 'flame-outline', color: COLORS.warning },
+            { label: 'Streak', value: streak, icon: 'flame-outline', color: COLORS.warning, showFlame: true },
             { label: 'Calories', value: totalCalories > 999 ? `${(totalCalories / 1000).toFixed(1)}k` : totalCalories, icon: 'flash-outline', color: COLORS.danger },
           ].map((stat, i) => (
             <View
@@ -213,7 +219,10 @@ const ProfileScreen = () => {
                 },
               ]}
             >
-              <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
+                {stat.showFlame && <Ionicons name="flame" size={16} color={stat.color} />}
+              </View>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
             </View>
           ))}
@@ -243,7 +252,6 @@ const ProfileScreen = () => {
                 <TextInput
                   value={editData[key]}
                   onChangeText={(t) => {
-                    // Filter numeric fields to only allow valid characters
                     let filtered = t;
                     if (keyboardType === 'number-pad') filtered = t.replace(/[^0-9]/g, '');
                     else if (keyboardType === 'decimal-pad') filtered = t.replace(/[^0-9.]/g, '');
@@ -380,9 +388,9 @@ const ProfileScreen = () => {
                   {/* Visual BMI bar */}
                   <View style={styles.bmiBarContainer}>
                     <View style={styles.bmiBar}>
-                      <View style={[styles.bmiSegment, { backgroundColor: '#3B82F6', flex: 3.5 }]} />
-                      <View style={[styles.bmiSegment, { backgroundColor: '#10B981', flex: 6.5 }]} />
-                      <View style={[styles.bmiSegment, { backgroundColor: '#F59E0B', flex: 5 }]} />
+                      <View style={[styles.bmiSegment, { backgroundColor: '#60A5FA', flex: 3.5 }]} />
+                      <View style={[styles.bmiSegment, { backgroundColor: '#22C55E', flex: 6.5 }]} />
+                      <View style={[styles.bmiSegment, { backgroundColor: '#FBBF24', flex: 5 }]} />
                       <View style={[styles.bmiSegment, { backgroundColor: '#EF4444', flex: 10 }]} />
                     </View>
                     {/* BMI indicator dot */}
@@ -461,9 +469,9 @@ const ProfileScreen = () => {
             </Text>
             <Switch
               value={isDark}
-              onValueChange={toggleTheme}
-              trackColor={{ false: '#E2E8F0', true: `${COLORS.primary}60` }}
-              thumbColor={isDark ? COLORS.primary : '#94A3B8'}
+              onValueChange={(v) => { haptics.selection(); toggleTheme(v); }}
+              trackColor={{ false: '#E0E0E0', true: `${COLORS.primary}60` }}
+              thumbColor={isDark ? COLORS.primary : '#999999'}
             />
           </View>
 
@@ -477,9 +485,9 @@ const ProfileScreen = () => {
             </Text>
             <Switch
               value={notificationsEnabled}
-              onValueChange={handleToggleNotifications}
-              trackColor={{ false: '#E2E8F0', true: `${COLORS.warning}60` }}
-              thumbColor={notificationsEnabled ? COLORS.warning : '#94A3B8'}
+              onValueChange={(v) => { haptics.selection(); handleToggleNotifications(v); }}
+              trackColor={{ false: '#E0E0E0', true: `${COLORS.warning}60` }}
+              thumbColor={notificationsEnabled ? COLORS.warning : '#999999'}
             />
           </View>
         </View>
@@ -522,14 +530,14 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 12,
+    borderRadius: 6,
   },
   editBtnText: { fontSize: 13, fontWeight: '700' },
   avatarSection: { alignItems: 'center', paddingBottom: 24 },
   avatar: {
     width: 96,
     height: 96,
-    borderRadius: 32,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -543,7 +551,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 6,
   },
   goalBadgeText: { fontSize: 13, fontWeight: '600' },
   statsRow: {
@@ -553,16 +561,22 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 14,
     alignItems: 'center',
   },
   statValue: { fontSize: 20, fontWeight: '800' },
-  statLabel: { fontSize: 11, fontWeight: '500', marginTop: 4 },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1.0,
+  },
   infoCard: {
     marginHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 16,
     marginBottom: 16,
@@ -577,7 +591,7 @@ const styles = StyleSheet.create({
   infoIcon: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -585,7 +599,7 @@ const styles = StyleSheet.create({
   infoValue: { fontSize: 14, fontWeight: '700' },
   bmiRow: {
     marginTop: 8,
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 14,
   },
@@ -635,17 +649,17 @@ const styles = StyleSheet.create({
   idealWeight: { fontSize: 12, marginTop: 8, textAlign: 'center' },
   editCard: {
     marginHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 16,
     marginBottom: 16,
   },
   editField: { marginBottom: 14 },
   editLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.0,
     marginBottom: 6,
   },
   fieldError: { color: COLORS.danger, fontSize: 12, marginTop: 4, fontWeight: '500' },
@@ -653,13 +667,13 @@ const styles = StyleSheet.create({
   selectorChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 6,
     borderWidth: 1.5,
   },
   editActions: { flexDirection: 'row', gap: 12, marginTop: 16 },
   cancelBtn: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 8,
     borderWidth: 1.5,
     paddingVertical: 13,
     alignItems: 'center',
@@ -667,7 +681,7 @@ const styles = StyleSheet.create({
   cancelBtnText: { fontSize: 14, fontWeight: '600' },
   saveBtn: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 8,
     backgroundColor: COLORS.primary,
     paddingVertical: 13,
     alignItems: 'center',
@@ -684,7 +698,7 @@ const styles = StyleSheet.create({
   settingLabel: { flex: 1, fontSize: 15, fontWeight: '500' },
   logoutBtn: {
     marginHorizontal: 20,
-    borderRadius: 16,
+    borderRadius: 8,
     borderWidth: 1.5,
     borderColor: `${COLORS.danger}40`,
     backgroundColor: `${COLORS.danger}08`,

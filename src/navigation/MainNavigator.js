@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import DashboardScreen from '../screens/main/DashboardScreen';
@@ -8,11 +8,11 @@ import AIScreen from '../screens/main/AIScreen';
 import ProgressScreen from '../screens/main/ProgressScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import useTheme from '../hooks/useTheme';
+import useWorkoutStore from '../store/workoutStore';
 import { COLORS, ROUTES } from '../utils/constants';
 
 const Tab = createBottomTabNavigator();
 
-// ─── Custom Tab Bar Label ──────────────────────────────────────────────────────
 const TabLabel = ({ label, focused, color }) => (
   <Text
     style={{
@@ -28,6 +28,7 @@ const TabLabel = ({ label, focused, color }) => (
 
 const MainNavigator = () => {
   const { isDark, colors } = useTheme();
+  const { streak } = useWorkoutStore();
 
   return (
     <Tab.Navigator
@@ -40,18 +41,15 @@ const MainNavigator = () => {
           borderTopWidth: 1,
           paddingTop: 6,
           paddingBottom: 6,
-          height: 85,
-          elevation: 20,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
+          height: 60,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: isDark ? COLORS.dark.textMuted : COLORS.light.textMuted,
         tabBarShowLabel: true,
         tabBarHideOnKeyboard: true,
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           const icons = {
             [ROUTES.DASHBOARD]: focused ? 'home' : 'home-outline',
             [ROUTES.LOG_WORKOUT]: focused ? 'add-circle' : 'add-circle-outline',
@@ -61,23 +59,7 @@ const MainNavigator = () => {
           };
 
           const iconName = icons[route.name] || 'ellipse';
-
-          if (route.name === ROUTES.LOG_WORKOUT) {
-            return (
-              <View
-                style={[
-                  styles.logButton,
-                  {
-                    backgroundColor: focused ? COLORS.primaryDark : COLORS.primary,
-                  },
-                ]}
-              >
-                <Ionicons name="add" size={28} color="#FFF" />
-              </View>
-            );
-          }
-
-          return <Ionicons name={iconName} size={22} color={color} />;
+          return <Ionicons name={iconName} size={20} color={color} />;
         },
         tabBarLabel: ({ focused, color }) => {
           const labels = {
@@ -87,10 +69,6 @@ const MainNavigator = () => {
             [ROUTES.PROGRESS]: 'Progress',
             [ROUTES.PROFILE]: 'Profile',
           };
-
-          if (route.name === ROUTES.LOG_WORKOUT) {
-            return null;
-          }
 
           return (
             <TabLabel
@@ -102,7 +80,14 @@ const MainNavigator = () => {
         },
       })}
     >
-      <Tab.Screen name={ROUTES.DASHBOARD} component={DashboardScreen} />
+      <Tab.Screen
+        name={ROUTES.DASHBOARD}
+        component={DashboardScreen}
+        options={{
+          tabBarBadge: streak > 0 ? streak : undefined,
+          tabBarBadgeStyle: streak > 0 ? { backgroundColor: COLORS.primary, color: '#FFF', fontSize: 10, fontWeight: '700' } : undefined,
+        }}
+      />
       <Tab.Screen name={ROUTES.PROGRESS} component={ProgressScreen} />
       <Tab.Screen name={ROUTES.LOG_WORKOUT} component={LogWorkoutScreen} />
       <Tab.Screen name={ROUTES.AI_SUGGESTIONS} component={AIScreen} />
@@ -110,21 +95,5 @@ const MainNavigator = () => {
     </Tab.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  logButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: -20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-});
 
 export default MainNavigator;

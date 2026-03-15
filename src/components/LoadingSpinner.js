@@ -86,7 +86,7 @@ const LoadingSpinner = ({
     styles.container,
     fullScreen && {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(248, 250, 252, 0.85)',
+      backgroundColor: isDark ? 'rgba(10, 10, 10, 0.85)' : 'rgba(245, 245, 245, 0.85)',
       zIndex: 999,
     },
   ];
@@ -220,7 +220,7 @@ export const AILoadingState = ({ isDark }) => {
       <Text
         style={[
           styles.aiTitle,
-          { color: isDark ? '#F1F5F9' : '#0F172A' },
+          { color: isDark ? '#F5F5F5' : '#FFF' },
         ]}
       >
         AI is crafting your plan
@@ -247,7 +247,7 @@ export const AILoadingState = ({ isDark }) => {
           />
         ))}
       </View>
-      <Text style={[styles.aiSubtext, { color: isDark ? '#94A3B8' : '#64748B' }]}>
+      <Text style={[styles.aiSubtext, { color: isDark ? '#A0A0A0' : '#555555' }]}>
         Analyzing your profile and workout history...
       </Text>
     </View>

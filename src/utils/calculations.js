@@ -235,3 +235,46 @@ export function idealWeightRange(heightCm) {
     max: Math.round(24.9 * heightM * heightM),
   };
 }
+
+// ─── Personal Bests ──────────────────────────────────────────────────────────
+/**
+ * Calculate personal bests from workout history
+ * @param {Array} workouts - Array of workout objects
+ * @returns {{ heaviestLifts: Array, longestDuration: Object|null, highestCalories: Object|null }}
+ */
+export function calculatePersonalBests(workouts) {
+  if (!workouts || workouts.length === 0) {
+    return { heaviestLifts: [], longestDuration: null, highestCalories: null };
+  }
+
+  // Heaviest lift per exercise (top 3)
+  const liftMap = {};
+  workouts.forEach((w) => {
+    if (w.weight && w.exerciseName) {
+      if (!liftMap[w.exerciseName] || w.weight > liftMap[w.exerciseName].weight) {
+        liftMap[w.exerciseName] = { exerciseName: w.exerciseName, weight: w.weight, sets: w.sets, reps: w.reps };
+      }
+    }
+  });
+  const heaviestLifts = Object.values(liftMap)
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 3);
+
+  // Longest duration
+  const longestDuration = workouts.reduce((best, w) => {
+    if (w.duration && (!best || w.duration > best.duration)) {
+      return { exerciseName: w.exerciseName, duration: w.duration };
+    }
+    return best;
+  }, null);
+
+  // Highest calorie burn
+  const highestCalories = workouts.reduce((best, w) => {
+    if (w.calories && (!best || w.calories > best.calories)) {
+      return { exerciseName: w.exerciseName, calories: w.calories };
+    }
+    return best;
+  }, null);
+
+  return { heaviestLifts, longestDuration, highestCalories };
+}

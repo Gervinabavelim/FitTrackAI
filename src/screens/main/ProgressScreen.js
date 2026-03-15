@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,18 +6,21 @@ import {
   StyleSheet,
   Dimensions,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import useAuthStore from '../../store/authStore';
 import useWorkoutStore from '../../store/workoutStore';
 import useTheme from '../../hooks/useTheme';
-import { COLORS, MONTHS, DAYS_OF_WEEK } from '../../utils/constants';
+import { COLORS, MONTHS, DAYS_OF_WEEK, ROUTES } from '../../utils/constants';
 import {
   calculateStreak,
   getDailyCalories,
   getWeightTrend,
   calculateWeeklyVolume,
+  calculatePersonalBests,
   average,
   formatDuration,
 } from '../../utils/calculations';
@@ -28,7 +31,7 @@ import { subDays, format } from 'date-fns';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - 40;
 
-const ProgressScreen = () => {
+const ProgressScreen = ({ navigation }) => {
   const { user, profile } = useAuthStore();
   const { workouts, fetchWorkouts, loading } = useWorkoutStore();
   const { isDark, colors } = useTheme();
@@ -80,15 +83,31 @@ const ProgressScreen = () => {
     } catch { return false; }
   });
 
+  // Personal bests
+  const personalBests = useMemo(() => calculatePersonalBests(workouts), [workouts]);
+
+  // Weekly insight text
+  const weeklyInsight = useMemo(() => {
+    const vol = calculateWeeklyVolume(workouts, 2);
+    if (vol.length < 2) return null;
+    const thisWeek = vol[1].count;
+    const lastWeek = vol[0].count;
+    if (thisWeek === 0 && lastWeek === 0) return 'No workouts yet. Time to get moving!';
+    if (thisWeek === 0) return `No workouts this week yet. Last week you did ${lastWeek}!`;
+    if (thisWeek > lastWeek) return `${thisWeek} workout${thisWeek !== 1 ? 's' : ''} this week, up from ${lastWeek} last week!`;
+    if (thisWeek < lastWeek) return `${thisWeek} workout${thisWeek !== 1 ? 's' : ''} this week, down from ${lastWeek} last week.`;
+    return `${thisWeek} workout${thisWeek !== 1 ? 's' : ''} this week, same as last week. Keep it steady!`;
+  }, [workouts]);
+
   // ─── Chart config ──────────────────────────────────────────────────────────────
   const chartConfig = {
     backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
     backgroundGradientFrom: isDark ? COLORS.dark.card : COLORS.light.card,
     backgroundGradientTo: isDark ? COLORS.dark.card : COLORS.light.card,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(99, 102, 241, ${opacity})`,
-    labelColor: () => (isDark ? '#94A3B8' : '#64748B'),
-    style: { borderRadius: 16 },
+    color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
+    labelColor: () => (isDark ? '#A0A0A0' : '#555555'),
+    style: { borderRadius: 10 },
     propsForDots: {
       r: '4',
       strokeWidth: '2',
@@ -96,14 +115,14 @@ const ProgressScreen = () => {
     },
     propsForBackgroundLines: {
       strokeDasharray: '',
-      stroke: isDark ? '#334155' : '#E2E8F0',
+      stroke: isDark ? '#2A2A2A' : '#E0E0E0',
       strokeWidth: 1,
     },
   };
 
   const calorieChartConfig = {
     ...chartConfig,
-    color: (opacity = 1) => `rgba(245, 158, 11, ${opacity})`,
+    color: (opacity = 1) => `rgba(251, 191, 36, ${opacity})`,
     propsForDots: {
       r: '3',
       strokeWidth: '2',
@@ -113,7 +132,7 @@ const ProgressScreen = () => {
 
   const barChartConfig = {
     ...chartConfig,
-    color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+    color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`,
   };
 
   // ─── Generate 30-day labels (every 7th day) ───────────────────────────────────
@@ -232,7 +251,7 @@ const ProgressScreen = () => {
               ]}
             >
               <Text style={[styles.summaryTitle, { color: colors.text }]}>
-                This Month
+                THIS MONTH
               </Text>
               <View style={styles.summaryRow}>
                 <View style={styles.summaryItem}>
@@ -240,7 +259,7 @@ const ProgressScreen = () => {
                     {last30Workouts.length}
                   </Text>
                   <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
-                    Workouts
+                    WORKOUTS
                   </Text>
                 </View>
                 <View
@@ -254,7 +273,7 @@ const ProgressScreen = () => {
                     {last30Workouts.reduce((s, w) => s + (w.calories || 0), 0).toLocaleString()}
                   </Text>
                   <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
-                    Calories
+                    CALORIES
                   </Text>
                 </View>
                 <View
@@ -264,11 +283,14 @@ const ProgressScreen = () => {
                   ]}
                 />
                 <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryValue, { color: COLORS.success }]}>
-                    {streak}🔥
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text style={[styles.summaryValue, { color: COLORS.success }]}>
+                      {streak}
+                    </Text>
+                    <Ionicons name="flame" size={20} color={COLORS.success} />
+                  </View>
                   <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
-                    Streak
+                    STREAK
                   </Text>
                 </View>
               </View>
@@ -278,9 +300,12 @@ const ProgressScreen = () => {
               <>
                 {/* ── Calories Burned Chart ── */}
                 <View style={styles.chartSection}>
-                  <Text style={[styles.chartTitle, { color: colors.text }]}>
-                    🔥 Calories Burned — Last 30 Days
-                  </Text>
+                  <View style={styles.chartTitleRow}>
+                    <Ionicons name="flame" size={16} color={COLORS.warning} />
+                    <Text style={[styles.chartTitle, { color: colors.text }]}>
+                      Calories Burned — Last 30 Days
+                    </Text>
+                  </View>
                   <View
                     style={[
                       styles.chartCard,
@@ -308,9 +333,12 @@ const ProgressScreen = () => {
 
                 {/* ── Weekly Workout Count Bar Chart ── */}
                 <View style={styles.chartSection}>
-                  <Text style={[styles.chartTitle, { color: colors.text }]}>
-                    📅 Weekly Workout Count — Last 4 Weeks
-                  </Text>
+                  <View style={styles.chartTitleRow}>
+                    <Ionicons name="calendar-outline" size={16} color={COLORS.info} />
+                    <Text style={[styles.chartTitle, { color: colors.text }]}>
+                      Weekly Workout Count — Last 4 Weeks
+                    </Text>
+                  </View>
                   <View
                     style={[
                       styles.chartCard,
@@ -337,9 +365,12 @@ const ProgressScreen = () => {
 
                 {/* ── Weight Trend Chart ── */}
                 <View style={styles.chartSection}>
-                  <Text style={[styles.chartTitle, { color: colors.text }]}>
-                    ⚖️ Body Weight Trend — Last 30 Days
-                  </Text>
+                  <View style={styles.chartTitleRow}>
+                    <Ionicons name="scale-outline" size={16} color={COLORS.info} />
+                    <Text style={[styles.chartTitle, { color: colors.text }]}>
+                      Body Weight Trend — Last 30 Days
+                    </Text>
+                  </View>
                   {hasWeightData ? (
                     <View
                       style={[
@@ -359,8 +390,8 @@ const ProgressScreen = () => {
                         height={200}
                         chartConfig={{
                           ...chartConfig,
-                          color: (opacity = 1) => `rgba(236, 72, 153, ${opacity})`,
-                          propsForDots: { r: '4', strokeWidth: '2', stroke: '#EC4899' },
+                          color: (opacity = 1) => `rgba(167, 139, 250, ${opacity})`,
+                          propsForDots: { r: '4', strokeWidth: '2', stroke: '#A78BFA' },
                         }}
                         bezier
                         withDots
@@ -380,7 +411,7 @@ const ProgressScreen = () => {
                         },
                       ]}
                     >
-                      <Text style={{ fontSize: 32 }}>⚖️</Text>
+                      <Ionicons name="scale-outline" size={32} color={colors.textMuted} />
                       <Text style={[styles.emptyChartText, { color: colors.textMuted }]}>
                         Log your body weight when logging workouts to see your weight trend here.
                       </Text>
@@ -390,16 +421,92 @@ const ProgressScreen = () => {
               </>
             )}
 
-            {/* ── Personal Records ── */}
+            {/* ── Weekly Insight ── */}
+            {weeklyInsight && workouts.length > 0 && (
+              <View
+                style={[
+                  styles.insightCard,
+                  {
+                    backgroundColor: `${COLORS.primary}12`,
+                    borderColor: `${COLORS.primary}30`,
+                  },
+                ]}
+              >
+                <Ionicons name="trending-up" size={18} color={COLORS.primary} />
+                <Text style={[styles.insightText, { color: COLORS.primary }]}>
+                  {weeklyInsight}
+                </Text>
+              </View>
+            )}
+
+            {/* ── Personal Bests ── */}
+            {workouts.length > 0 && (personalBests.heaviestLifts.length > 0 || personalBests.longestDuration || personalBests.highestCalories) && (
+              <View
+                style={[
+                  styles.summaryCard,
+                  {
+                    backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
+                    borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.summaryTitle, { color: colors.text }]}>
+                  PERSONAL BESTS
+                </Text>
+                {personalBests.heaviestLifts.map((pr, i) => (
+                  <View key={i} style={styles.prRow}>
+                    <Ionicons name="trophy" size={16} color={COLORS.warning} />
+                    <Text style={[styles.prText, { color: colors.text }]}>
+                      {pr.exerciseName}
+                    </Text>
+                    <Text style={[styles.prValue, { color: COLORS.primary }]}>
+                      {pr.weight} kg
+                    </Text>
+                  </View>
+                ))}
+                {personalBests.longestDuration && (
+                  <View style={styles.prRow}>
+                    <Ionicons name="time" size={16} color={COLORS.info} />
+                    <Text style={[styles.prText, { color: colors.text }]}>
+                      {personalBests.longestDuration.exerciseName}
+                    </Text>
+                    <Text style={[styles.prValue, { color: COLORS.info }]}>
+                      {formatDuration(personalBests.longestDuration.duration)}
+                    </Text>
+                  </View>
+                )}
+                {personalBests.highestCalories && (
+                  <View style={styles.prRow}>
+                    <Ionicons name="flame" size={16} color={COLORS.warning} />
+                    <Text style={[styles.prText, { color: colors.text }]}>
+                      {personalBests.highestCalories.exerciseName}
+                    </Text>
+                    <Text style={[styles.prValue, { color: COLORS.warning }]}>
+                      {personalBests.highestCalories.calories} kcal
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* ── Empty State with CTA ── */}
             {workouts.length === 0 && (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>📊</Text>
+                <Ionicons name="bar-chart-outline" size={48} color={colors.textMuted} />
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>
                   No data yet
                 </Text>
                 <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-                  Log your first workout to start tracking your progress
+                  Start your fitness journey today and watch your progress unfold!
                 </Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
+                  style={styles.emptyCTA}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="add-circle-outline" size={18} color="#FFF" />
+                  <Text style={styles.emptyCTAText}>Log Your First Workout</Text>
+                </TouchableOpacity>
               </View>
             )}
 
@@ -427,27 +534,44 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     marginHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 20,
     marginBottom: 20,
   },
-  summaryTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16 },
+  summaryTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 16,
+    textTransform: 'uppercase',
+    letterSpacing: 1.0,
+  },
   summaryRow: { flexDirection: 'row', alignItems: 'center' },
   summaryItem: { flex: 1, alignItems: 'center' },
   summaryValue: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
-  summaryLabel: { fontSize: 12, fontWeight: '500', marginTop: 4 },
+  summaryLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1.0,
+  },
   summaryDivider: { width: 1, height: 48 },
   chartSection: { marginBottom: 20 },
-  chartTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+  chartTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginHorizontal: 20,
     marginBottom: 12,
   },
+  chartTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
   chartCard: {
     marginHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 16,
     overflow: 'hidden',
@@ -464,9 +588,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 40,
   },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
-  emptySubtext: { fontSize: 14, textAlign: 'center', lineHeight: 22 },
+  emptyTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8, marginTop: 12, textAlign: 'center' },
+  emptySubtext: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 16 },
+  emptyCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  emptyCTAText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
+  insightCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 20,
+  },
+  insightText: { fontSize: 13, fontWeight: '600', flex: 1, lineHeight: 20 },
+  prRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+  },
+  prText: { flex: 1, fontSize: 14, fontWeight: '600' },
+  prValue: { fontSize: 14, fontWeight: '800' },
 });
 
 export default ProgressScreen;

@@ -4,20 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import useTheme from '../hooks/useTheme';
 import { COLORS } from '../utils/constants';
 
-/**
- * Reusable stat card with icon, value, and label
- *
- * Props:
- * - icon: Ionicons icon name (string)
- * - iconColor: color string (default primary)
- * - value: string | number — the main value to display
- * - label: string — description label below the value
- * - unit: string — optional unit appended to value (e.g., "kcal", "days")
- * - trend: 'up' | 'down' | null — show trend indicator
- * - trendValue: string — trend percentage or absolute change
- * - style: ViewStyle — additional container styles
- * - compact: bool — smaller version for dense layouts
- */
 const StatCard = ({
   icon,
   iconColor,
@@ -62,7 +48,7 @@ const StatCard = ({
             backgroundColor: `${accentColor}18`,
             width: compact ? 36 : 44,
             height: compact ? 36 : 44,
-            borderRadius: compact ? 10 : 12,
+            borderRadius: compact ? 8 : 10,
           },
         ]}
       >
@@ -81,7 +67,7 @@ const StatCard = ({
               styles.value,
               {
                 color: colors.text,
-                fontSize: compact ? 20 : 26,
+                fontSize: compact ? 22 : 30,
               },
             ]}
             numberOfLines={1}
@@ -171,15 +157,15 @@ export const HeroStat = ({ icon, iconColor, value, unit, label, isDark, colors }
       >
         <Ionicons name={icon} size={32} color={accentColor} />
       </View>
-      <Text style={[heroStyles.value, { color: isDark ? '#F1F5F9' : '#0F172A' }]}>
+      <Text style={[heroStyles.value, { color: isDark ? '#F5F5F5' : '#FFF' }]}>
         {value}
         {unit && (
-          <Text style={[heroStyles.unit, { color: isDark ? '#94A3B8' : '#64748B' }]}>
+          <Text style={[heroStyles.unit, { color: isDark ? '#A0A0A0' : '#555555' }]}>
             {' '}{unit}
           </Text>
         )}
       </Text>
-      <Text style={[heroStyles.label, { color: isDark ? '#94A3B8' : '#64748B' }]}>
+      <Text style={[heroStyles.label, { color: isDark ? '#A0A0A0' : '#555555' }]}>
         {label}
       </Text>
     </View>
@@ -188,15 +174,10 @@ export const HeroStat = ({ icon, iconColor, value, unit, label, isDark, colors }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 18,
+    borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
   },
   iconContainer: {
     alignItems: 'center',
@@ -212,7 +193,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   value: {
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   unit: {
@@ -220,9 +201,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   label: {
-    fontWeight: '500',
+    fontWeight: '600',
     marginTop: 2,
     lineHeight: 16,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 1.0,
   },
   trendBadge: {
     flexDirection: 'row',
@@ -230,7 +214,7 @@ const styles = StyleSheet.create({
     gap: 3,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
     marginLeft: 8,
   },
   trendText: {
@@ -254,29 +238,24 @@ const rowStyles = StyleSheet.create({
 const heroStyles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
     marginHorizontal: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
   },
   iconBg: {
     width: 60,
     height: 60,
-    borderRadius: 18,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   value: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 36,
+    fontWeight: '900',
     letterSpacing: -1,
   },
   unit: {
@@ -284,10 +263,12 @@ const heroStyles = StyleSheet.create({
     fontWeight: '500',
   },
   label: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '600',
     marginTop: 4,
     textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1.0,
   },
 });
 

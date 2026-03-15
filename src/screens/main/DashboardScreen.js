@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import useAuthStore from '../../store/authStore';
 import useWorkoutStore from '../../store/workoutStore';
 import useTheme from '../../hooks/useTheme';
+import useHaptics from '../../hooks/useHaptics';
 import { COLORS, ROUTES } from '../../utils/constants';
 import { formatDuration } from '../../utils/calculations';
 import WorkoutCard from '../../components/WorkoutCard';
@@ -34,10 +35,10 @@ const DashboardScreen = ({ navigation }) => {
   } = useWorkoutStore();
 
   const { isDark, colors } = useTheme();
+  const haptics = useHaptics();
   const [refreshing, setRefreshing] = useState(false);
   const [greeting, setGreeting] = useState('');
 
-  // Compute greeting based on time of day
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting('Good morning');
@@ -45,7 +46,6 @@ const DashboardScreen = ({ navigation }) => {
     else setGreeting('Good evening');
   }, []);
 
-  // Motivational subtitle
   const motivationalTexts = [
     'Every rep counts!',
     'Consistency beats perfection.',
@@ -55,7 +55,6 @@ const DashboardScreen = ({ navigation }) => {
   ];
   const motivationalText = motivationalTexts[new Date().getDate() % motivationalTexts.length];
 
-  // Load data on mount
   useEffect(() => {
     if (user?.uid) {
       fetchWorkouts(user.uid);
@@ -63,7 +62,6 @@ const DashboardScreen = ({ navigation }) => {
     }
   }, [user?.uid]);
 
-  // Compute weekly stats after workouts load
   useEffect(() => {
     computeWeeklyStats();
   }, [workouts]);
@@ -84,13 +82,11 @@ const DashboardScreen = ({ navigation }) => {
     }
   };
 
-  // Today's workout (first of today)
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todayWorkouts = recentWorkouts.filter(
     (w) => w.date && w.date.startsWith(todayStr)
   );
 
-  // Average workout duration
   const avgDuration =
     workouts.length > 0
       ? Math.round(workouts.reduce((s, w) => s + (w.duration || 0), 0) / workouts.length)
@@ -116,14 +112,14 @@ const DashboardScreen = ({ navigation }) => {
           />
         }
       >
-        {/* ── Header ── */}
+        {/* Header */}
         <View style={styles.header}>
           <View>
             <Text style={[styles.greeting, { color: colors.textSecondary }]}>
               {greeting},
             </Text>
             <Text style={[styles.userName, { color: colors.text }]}>
-              {firstName} 👋
+              {firstName}
             </Text>
             <Text style={[styles.motivational, { color: colors.textMuted }]}>
               {motivationalText}
@@ -142,20 +138,24 @@ const DashboardScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* ── Date and Streak Banner ── */}
+        {/* Streak Banner */}
         <View
           style={[
             styles.streakBanner,
             {
-              backgroundColor: streak > 0 ? `${COLORS.warning}18` : (isDark ? COLORS.dark.card : COLORS.light.card),
-              borderColor: streak > 0 ? `${COLORS.warning}40` : (isDark ? COLORS.dark.border : COLORS.light.border),
+              backgroundColor: streak > 0 ? `${COLORS.primary}18` : (isDark ? COLORS.dark.card : COLORS.light.card),
+              borderColor: streak > 0 ? `${COLORS.primary}40` : (isDark ? COLORS.dark.border : COLORS.light.border),
             },
           ]}
         >
           <View style={styles.streakLeft}>
-            <Text style={styles.streakFlame}>{streak > 0 ? '🔥' : '💤'}</Text>
+            <Ionicons
+              name={streak > 0 ? 'flame' : 'bed-outline'}
+              size={28}
+              color={streak > 0 ? COLORS.primary : colors.textMuted}
+            />
             <View>
-              <Text style={[styles.streakCount, { color: streak > 0 ? COLORS.warning : colors.textMuted }]}>
+              <Text style={[styles.streakCount, { color: streak > 0 ? COLORS.primary : colors.textMuted }]}>
                 {streak} day{streak !== 1 ? 's' : ''} streak
               </Text>
               <Text style={[styles.streakLabel, { color: colors.textMuted }]}>
@@ -168,7 +168,7 @@ const DashboardScreen = ({ navigation }) => {
           </Text>
         </View>
 
-        {/* ── Quick Actions ── */}
+        {/* Quick Actions */}
         <View style={styles.quickActions}>
           {[
             { icon: 'add-circle-outline', label: 'Log', color: COLORS.primary, route: ROUTES.LOG_WORKOUT },
@@ -178,7 +178,7 @@ const DashboardScreen = ({ navigation }) => {
           ].map((action, i) => (
             <TouchableOpacity
               key={i}
-              onPress={() => navigation.navigate(action.route)}
+              onPress={() => { haptics.light(); navigation.navigate(action.route); }}
               style={styles.quickActionBtn}
               activeOpacity={0.7}
             >
@@ -192,47 +192,84 @@ const DashboardScreen = ({ navigation }) => {
           ))}
         </View>
 
-        {/* ── Quick Stats ── */}
-        <View style={styles.statsSection}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>This Week</Text>
-          <View style={styles.statsGrid}>
-            <StatCard
-              icon="fitness-outline"
-              iconColor={COLORS.primary}
-              value={weeklyWorkoutCount}
-              label="Workouts"
-              style={styles.statCardHalf}
-            />
-            <StatCard
-              icon="flame-outline"
-              iconColor={COLORS.warning}
-              value={totalCalories > 999 ? `${(totalCalories / 1000).toFixed(1)}k` : totalCalories}
-              label="Total Calories"
-              style={styles.statCardHalf}
-            />
+        {/* Stats or Welcome */}
+        {workouts.length === 0 ? (
+          <View
+            style={[
+              styles.welcomeCard,
+              {
+                backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
+                borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
+              },
+            ]}
+          >
+            <Text style={[styles.welcomeTitle, { color: colors.text }]}>
+              Welcome to FitTrack AI!
+            </Text>
+            <Text style={[styles.welcomeSubtext, { color: colors.textMuted }]}>
+              Get started with these actions:
+            </Text>
+            {[
+              { icon: 'add-circle-outline', label: 'Log your first workout', route: ROUTES.LOG_WORKOUT, color: COLORS.primary },
+              { icon: 'sparkles-outline', label: 'Generate an AI plan', route: ROUTES.AI_SUGGESTIONS, color: COLORS.warning },
+              { icon: 'person-outline', label: 'Complete your profile', route: ROUTES.PROFILE, color: COLORS.info },
+            ].map((cta, i) => (
+              <TouchableOpacity
+                key={i}
+                onPress={() => navigation.navigate(cta.route)}
+                style={styles.welcomeCTA}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.welcomeCTAIcon, { backgroundColor: `${cta.color}15` }]}>
+                  <Ionicons name={cta.icon} size={18} color={cta.color} />
+                </View>
+                <Text style={[styles.welcomeCTAText, { color: colors.text }]}>{cta.label}</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            ))}
           </View>
-          <View style={[styles.statsGrid, { marginTop: 12 }]}>
-            <StatCard
-              icon="time-outline"
-              iconColor={COLORS.info}
-              value={formatDuration(avgDuration)}
-              label="Avg Duration"
-              style={styles.statCardHalf}
-            />
-            <StatCard
-              icon="trophy-outline"
-              iconColor={COLORS.success}
-              value={workouts.length}
-              label="Total Workouts"
-              style={styles.statCardHalf}
-            />
+        ) : (
+          <View style={styles.statsSection}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>THIS WEEK</Text>
+            <View style={styles.statsGrid}>
+              <StatCard
+                icon="fitness-outline"
+                iconColor={COLORS.primary}
+                value={weeklyWorkoutCount}
+                label="Workouts"
+                style={styles.statCardHalf}
+              />
+              <StatCard
+                icon="flame-outline"
+                iconColor={COLORS.warning}
+                value={totalCalories > 999 ? `${(totalCalories / 1000).toFixed(1)}k` : totalCalories}
+                label="Total Calories"
+                style={styles.statCardHalf}
+              />
+            </View>
+            <View style={[styles.statsGrid, { marginTop: 12 }]}>
+              <StatCard
+                icon="time-outline"
+                iconColor={COLORS.info}
+                value={formatDuration(avgDuration)}
+                label="Avg Duration"
+                style={styles.statCardHalf}
+              />
+              <StatCard
+                icon="trophy-outline"
+                iconColor={COLORS.success}
+                value={workouts.length}
+                label="Total Workouts"
+                style={styles.statCardHalf}
+              />
+            </View>
           </View>
-        </View>
+        )}
 
-        {/* ── Today's Workouts ── */}
+        {/* Today's Workouts */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Today</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>TODAY</Text>
             <TouchableOpacity
               onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
               style={[styles.addBtn, { backgroundColor: `${COLORS.primary}18` }]}
@@ -263,7 +300,7 @@ const DashboardScreen = ({ navigation }) => {
               ]}
               activeOpacity={0.8}
             >
-              <Text style={styles.emptyTodayEmoji}>🏋️</Text>
+              <Ionicons name="barbell-outline" size={36} color={colors.textMuted} />
               <Text style={[styles.emptyTodayTitle, { color: colors.text }]}>
                 No workout logged today
               </Text>
@@ -274,14 +311,14 @@ const DashboardScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* ── Recent Workouts ── */}
+        {/* Recent Workouts */}
         {recentWorkouts.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>RECENT</Text>
               <TouchableOpacity onPress={() => navigation.navigate(ROUTES.PROGRESS)}>
                 <Text style={[styles.viewAllText, { color: COLORS.primary }]}>
-                  View all →
+                  View all
                 </Text>
               </TouchableOpacity>
             </View>
@@ -296,7 +333,7 @@ const DashboardScreen = ({ navigation }) => {
           </View>
         )}
 
-        {/* ── AI Workout CTA ── */}
+        {/* AI CTA */}
         <TouchableOpacity
           onPress={() => navigation.navigate(ROUTES.AI_SUGGESTIONS)}
           style={styles.aiCTA}
@@ -304,7 +341,7 @@ const DashboardScreen = ({ navigation }) => {
         >
           <View style={styles.aiCTAContent}>
             <View>
-              <Text style={styles.aiCTATitle}>AI Workout Plan ✨</Text>
+              <Text style={styles.aiCTATitle}>AI Workout Plan</Text>
               <Text style={styles.aiCTASubtext}>
                 Get a personalized 7-day plan crafted for your goals
               </Text>
@@ -335,14 +372,14 @@ const styles = StyleSheet.create({
   avatarBtn: {
     width: 48,
     height: 48,
-    borderRadius: 16,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarEmoji: { fontSize: 20, fontWeight: '700', color: COLORS.primary },
   streakBanner: {
     marginHorizontal: 20,
-    borderRadius: 18,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 16,
     flexDirection: 'row',
@@ -351,7 +388,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   streakLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  streakFlame: { fontSize: 28 },
   streakCount: { fontSize: 18, fontWeight: '800' },
   streakLabel: { fontSize: 12, fontWeight: '500', marginTop: 2 },
   todayDate: { fontSize: 14, fontWeight: '600' },
@@ -368,7 +404,7 @@ const styles = StyleSheet.create({
   quickActionIcon: {
     width: 52,
     height: 52,
-    borderRadius: 16,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -386,37 +422,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700', letterSpacing: -0.3 },
+  sectionTitle: { fontSize: 13, fontWeight: '700', letterSpacing: 1.0, textTransform: 'uppercase' },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: 6,
   },
   addBtnText: { fontSize: 13, fontWeight: '700' },
   viewAllText: { fontSize: 13, fontWeight: '600' },
   emptyTodayCard: {
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     padding: 24,
     alignItems: 'center',
   },
-  emptyTodayEmoji: { fontSize: 36, marginBottom: 8 },
-  emptyTodayTitle: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  emptyTodayTitle: { fontSize: 16, fontWeight: '700', textAlign: 'center', marginTop: 8 },
   emptyTodaySubtext: { fontSize: 13, textAlign: 'center', marginTop: 4, lineHeight: 18 },
   aiCTA: {
     marginHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 10,
     overflow: 'hidden',
     backgroundColor: COLORS.primary,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
   },
   aiCTAContent: {
     flexDirection: 'row',
@@ -425,7 +455,30 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   aiCTATitle: { fontSize: 16, fontWeight: '800', color: '#FFF', marginBottom: 4 },
-  aiCTASubtext: { fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 18 },
+  aiCTASubtext: { fontSize: 13, color: 'rgba(0,0,0,0.6)', lineHeight: 18 },
+  welcomeCard: {
+    marginHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 20,
+    marginBottom: 24,
+  },
+  welcomeTitle: { fontSize: 18, fontWeight: '800', marginBottom: 4 },
+  welcomeSubtext: { fontSize: 13, marginBottom: 16 },
+  welcomeCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    gap: 12,
+  },
+  welcomeCTAIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  welcomeCTAText: { flex: 1, fontSize: 14, fontWeight: '600' },
 });
 
 export default DashboardScreen;

@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../utils/constants';
 
 const useThemeStore = create((set, get) => ({
-  themePreference: 'system', // 'system' | 'dark' | 'light'
+  themePreference: 'dark', // 'system' | 'dark' | 'light'
   loaded: false,
 
   // Load persisted preference from AsyncStorage

@@ -7,18 +7,18 @@ export const FITNESS_LEVELS = [
 
 // ─── Fitness Goals ─────────────────────────────────────────────────────────────
 export const FITNESS_GOALS = [
-  { label: 'Lose Weight', value: 'lose_weight', icon: '⚡', description: 'Burn fat and reduce body weight' },
-  { label: 'Build Muscle', value: 'build_muscle', icon: '💪', description: 'Increase strength and muscle mass' },
-  { label: 'Maintain Fitness', value: 'maintain_fitness', icon: '🏃', description: 'Stay active and maintain current fitness' },
-  { label: 'Improve Endurance', value: 'improve_endurance', icon: '🚴', description: 'Boost cardiovascular fitness' },
-  { label: 'Increase Flexibility', value: 'increase_flexibility', icon: '🧘', description: 'Improve range of motion' },
+  { label: 'Lose Weight', value: 'lose_weight', icon: 'flash-outline', description: 'Burn fat and reduce body weight' },
+  { label: 'Build Muscle', value: 'build_muscle', icon: 'barbell-outline', description: 'Increase strength and muscle mass' },
+  { label: 'Maintain Fitness', value: 'maintain_fitness', icon: 'walk-outline', description: 'Stay active and maintain current fitness' },
+  { label: 'Improve Endurance', value: 'improve_endurance', icon: 'bicycle-outline', description: 'Boost cardiovascular fitness' },
+  { label: 'Increase Flexibility', value: 'increase_flexibility', icon: 'body-outline', description: 'Improve range of motion' },
 ];
 
 // ─── Exercise Categories ───────────────────────────────────────────────────────
 export const EXERCISE_CATEGORIES = {
   strength: {
     label: 'Strength Training',
-    color: '#6366F1',
+    color: '#3B82F6',
     exercises: [
       'Bench Press',
       'Squat',
@@ -54,7 +54,7 @@ export const EXERCISE_CATEGORIES = {
   },
   cardio: {
     label: 'Cardio',
-    color: '#F59E0B',
+    color: '#FBBF24',
     exercises: [
       'Running',
       'Cycling',
@@ -73,7 +73,7 @@ export const EXERCISE_CATEGORIES = {
   },
   bodyweight: {
     label: 'Bodyweight',
-    color: '#10B981',
+    color: '#22C55E',
     exercises: [
       'Push-up',
       'Pull-up',
@@ -99,7 +99,7 @@ export const EXERCISE_CATEGORIES = {
   },
   flexibility: {
     label: 'Flexibility & Mobility',
-    color: '#EC4899',
+    color: '#A78BFA',
     exercises: [
       'Yoga',
       'Pilates',
@@ -124,39 +124,39 @@ export const ALL_EXERCISES = Object.values(EXERCISE_CATEGORIES).flatMap(
 
 // ─── Color Themes ──────────────────────────────────────────────────────────────
 export const COLORS = {
-  primary: '#6366F1',
-  primaryLight: '#818CF8',
-  primaryDark: '#4338CA',
-  success: '#10B981',
-  warning: '#F59E0B',
+  primary: '#3B82F6',
+  primaryLight: '#60A5FA',
+  primaryDark: '#2563EB',
+  success: '#22C55E',
+  warning: '#FBBF24',
   danger: '#EF4444',
-  info: '#3B82F6',
+  info: '#60A5FA',
 
   dark: {
-    background: '#0F172A',
-    card: '#1E293B',
-    cardSecondary: '#1A2234',
-    border: '#334155',
-    text: '#F1F5F9',
-    textSecondary: '#94A3B8',
-    textMuted: '#64748B',
-    inputBg: '#334155',
+    background: '#0A0A0A',
+    card: '#161616',
+    cardSecondary: '#1C1C1E',
+    border: '#2A2A2A',
+    text: '#F5F5F5',
+    textSecondary: '#A0A0A0',
+    textMuted: '#666666',
+    inputBg: '#1C1C1E',
     statusBar: 'light',
   },
 
   light: {
-    background: '#F8FAFC',
+    background: '#F5F5F5',
     card: '#FFFFFF',
-    cardSecondary: '#F1F5F9',
-    border: '#E2E8F0',
-    text: '#0F172A',
-    textSecondary: '#475569',
-    textMuted: '#94A3B8',
-    inputBg: '#F1F5F9',
+    cardSecondary: '#F0F0F0',
+    border: '#E0E0E0',
+    text: '#111111',
+    textSecondary: '#555555',
+    textMuted: '#999999',
+    inputBg: '#F0F0F0',
     statusBar: 'dark',
   },
 
-  chart: ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#3B82F6'],
+  chart: ['#3B82F6', '#22C55E', '#FBBF24', '#EF4444', '#A78BFA', '#60A5FA'],
 };
 
 // ─── MET Values for Calorie Calculation ────────────────────────────────────────

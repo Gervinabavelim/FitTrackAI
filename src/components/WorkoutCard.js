@@ -10,23 +10,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { format, parseISO } from 'date-fns';
 import useTheme from '../hooks/useTheme';
+import useHaptics from '../hooks/useHaptics';
 import { COLORS, EXERCISE_CATEGORIES } from '../utils/constants';
 import { formatDuration } from '../utils/calculations';
 
-/**
- * Reusable card for displaying a logged workout entry
- *
- * Props:
- * - workout: Object — workout data from Firestore
- * - onDelete: Function — called with workoutId when delete is confirmed
- * - onPress: Function — called when card is tapped
- * - compact: bool — smaller layout for list views
- */
 const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
   const { isDark, colors } = useTheme();
+  const haptics = useHaptics();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Find exercise category for color
   const getCategoryColor = (exerciseName) => {
     for (const [, cat] of Object.entries(EXERCISE_CATEGORIES)) {
       if (cat.exercises.includes(exerciseName)) {
@@ -38,7 +30,6 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
 
   const categoryColor = getCategoryColor(workout.exerciseName || '');
 
-  // Format date
   const formattedDate = (() => {
     try {
       const date = typeof workout.date === 'string' ? parseISO(workout.date) : new Date(workout.date);
@@ -48,7 +39,6 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
     }
   })();
 
-  // Press animation
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
       toValue: 0.97,
@@ -66,6 +56,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
   };
 
   const handleDelete = () => {
+    haptics.warning();
     Alert.alert(
       'Delete Workout',
       `Remove "${workout.exerciseName || 'this workout'}" from your history?`,
@@ -98,7 +89,6 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
             },
           ]}
         >
-          {/* Colored left accent bar */}
           <View style={[styles.accentBar, { backgroundColor: categoryColor }]} />
 
           <View style={styles.compactContent}>
@@ -117,7 +107,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
             <View style={styles.compactStats}>
               {workout.sets && workout.reps && (
                 <Text style={[styles.statChip, { backgroundColor: `${categoryColor}18`, color: categoryColor }]}>
-                  {workout.sets}×{workout.reps}
+                  {workout.sets}x{workout.reps}
                 </Text>
               )}
               {workout.calories ? (
@@ -152,7 +142,6 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
         {/* Header */}
         <View style={styles.cardHeader}>
           <View style={styles.headerLeft}>
-            {/* Exercise icon */}
             <View
               style={[
                 styles.exerciseIcon,
@@ -178,7 +167,6 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
             </View>
           </View>
 
-          {/* Delete button */}
           {onDelete && (
             <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
               <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
@@ -197,78 +185,46 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
         {/* Stats grid */}
         <View style={styles.statsGrid}>
           {workout.sets != null && (
-            <StatItem
-              icon="repeat"
-              value={workout.sets}
-              label="Sets"
-              color={categoryColor}
-              isDark={isDark}
-              colors={colors}
-            />
+            <StatItem icon="repeat" value={workout.sets} label="Sets" color={categoryColor} isDark={isDark} colors={colors} />
           )}
           {workout.reps != null && (
-            <StatItem
-              icon="shuffle"
-              value={workout.reps}
-              label="Reps"
-              color={categoryColor}
-              isDark={isDark}
-              colors={colors}
-            />
+            <StatItem icon="shuffle" value={workout.reps} label="Reps" color={categoryColor} isDark={isDark} colors={colors} />
           )}
           {workout.weight != null && (
-            <StatItem
-              icon="barbell-outline"
-              value={`${workout.weight}kg`}
-              label="Weight"
-              color={categoryColor}
-              isDark={isDark}
-              colors={colors}
-            />
+            <StatItem icon="barbell-outline" value={`${workout.weight}kg`} label="Weight" color={categoryColor} isDark={isDark} colors={colors} />
           )}
           {workout.duration != null && (
-            <StatItem
-              icon="time-outline"
-              value={formatDuration(workout.duration)}
-              label="Duration"
-              color={categoryColor}
-              isDark={isDark}
-              colors={colors}
-            />
+            <StatItem icon="time-outline" value={formatDuration(workout.duration)} label="Duration" color={categoryColor} isDark={isDark} colors={colors} />
           )}
           {workout.calories != null && (
-            <StatItem
-              icon="flame-outline"
-              value={workout.calories}
-              label="Calories"
-              color={COLORS.warning}
-              isDark={isDark}
-              colors={colors}
-            />
+            <StatItem icon="flame-outline" value={workout.calories} label="Calories" color={COLORS.warning} isDark={isDark} colors={colors} />
           )}
         </View>
 
         {/* Notes */}
         {workout.notes && (
-          <Text
+          <View
             style={[
               styles.notes,
               {
-                color: colors.textSecondary,
-                backgroundColor: isDark ? COLORS.dark.border : '#F1F5F9',
+                backgroundColor: isDark ? COLORS.dark.border : '#F0F0F0',
               },
             ]}
-            numberOfLines={2}
           >
-            📝 {workout.notes}
-          </Text>
+            <Ionicons name="document-text-outline" size={14} color={colors.textSecondary} style={{ marginTop: 1 }} />
+            <Text
+              style={[styles.notesText, { color: colors.textSecondary }]}
+              numberOfLines={2}
+            >
+              {workout.notes}
+            </Text>
+          </View>
         )}
       </Animated.View>
     </TouchableOpacity>
   );
 };
 
-// ─── Stat Item Sub-component ──────────────────────────────────────────────────
 const StatItem = ({ icon, value, label, color, isDark, colors }) => (
   <View style={statStyles.container}>
     <View style={[statStyles.iconBg, { backgroundColor: `${color}15` }]}>
@@ -279,7 +235,6 @@ const StatItem = ({ icon, value, label, color, isDark, colors }) => (
   </View>
 );
 
-// ─── Helper: map exercise name to icon ────────────────────────────────────────
 function getExerciseIcon(exerciseName = '') {
   const name = exerciseName.toLowerCase();
   if (name.includes('run') || name.includes('sprint')) return 'walk-outline';
@@ -293,14 +248,9 @@ function getExerciseIcon(exerciseName = '') {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
     overflow: 'hidden',
   },
   cardHeader: {
@@ -318,7 +268,7 @@ const styles = StyleSheet.create({
   exerciseIcon: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -347,23 +297,23 @@ const styles = StyleSheet.create({
     margin: 16,
     marginTop: 4,
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  notesText: {
     fontSize: 13,
     lineHeight: 18,
+    flex: 1,
   },
-  // Compact styles
   compactCard: {
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1,
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
   },
   accentBar: {
     width: 4,
@@ -387,7 +337,7 @@ const styles = StyleSheet.create({
   statChip: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 6,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -405,7 +355,7 @@ const statStyles = StyleSheet.create({
   iconBg: {
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,

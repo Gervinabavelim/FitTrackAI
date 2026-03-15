@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,9 @@ import { format } from 'date-fns';
 import useAuthStore from '../../store/authStore';
 import useWorkoutStore from '../../store/workoutStore';
 import useTheme from '../../hooks/useTheme';
-import { COLORS } from '../../utils/constants';
+import useHaptics from '../../hooks/useHaptics';
+import { useToast } from '../../contexts/ToastContext';
+import { COLORS, ROUTES } from '../../utils/constants';
 import { estimateCalories } from '../../utils/calculations';
 import ExercisePicker from '../../components/ExercisePicker';
 import { InlineSpinner } from '../../components/LoadingSpinner';
@@ -25,10 +27,11 @@ import { checkWorkoutLogRateLimit } from '../../utils/rateLimiter';
 
 const LogWorkoutScreen = ({ navigation }) => {
   const { user, profile } = useAuthStore();
-  const { logWorkout, loading, streak } = useWorkoutStore();
+  const { logWorkout, loading, streak, recentWorkouts, fetchRecentWorkouts } = useWorkoutStore();
   const { isDark, colors } = useTheme();
+  const haptics = useHaptics();
+  const { showToast } = useToast();
 
-  // Form state
   const [exerciseName, setExerciseName] = useState('');
   const [sets, setSets] = useState('');
   const [reps, setReps] = useState('');
@@ -40,12 +43,22 @@ const LogWorkoutScreen = ({ navigation }) => {
   const [workoutDate, setWorkoutDate] = useState(new Date());
   const [isCaloriesManual, setIsCaloriesManual] = useState(false);
 
-  // UI state
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [errors, setErrors] = useState({});
-  const [success, setSuccess] = useState(false);
 
-  // Refs for field focus chaining
+  useEffect(() => {
+    if (user?.uid) fetchRecentWorkouts(user.uid);
+  }, [user?.uid]);
+
+  const recentExercises = useMemo(() => {
+    const seen = new Set();
+    return recentWorkouts.filter((w) => {
+      if (seen.has(w.exerciseName)) return false;
+      seen.add(w.exerciseName);
+      return true;
+    }).slice(0, 5);
+  }, [recentWorkouts]);
+
   const setsRef = useRef(null);
   const repsRef = useRef(null);
   const weightRef = useRef(null);
@@ -53,7 +66,6 @@ const LogWorkoutScreen = ({ navigation }) => {
   const caloriesRef = useRef(null);
   const notesRef = useRef(null);
 
-  // Auto-calculate calories when exercise/duration/weight changes
   const handleDurationChange = (val) => {
     const cleanVal = val.replace(/[^0-9]/g, '');
     setDuration(cleanVal);
@@ -74,7 +86,6 @@ const LogWorkoutScreen = ({ navigation }) => {
     if (errors.exerciseName) setErrors((e) => ({ ...e, exerciseName: null }));
   };
 
-  // ─── Validation ────────────────────────────────────────────────────────────────
   const validate = () => {
     const newErrors = {};
     if (!exerciseName.trim()) newErrors.exerciseName = 'Please select an exercise';
@@ -89,7 +100,6 @@ const LogWorkoutScreen = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ─── Save Workout ──────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!validate()) return;
 
@@ -114,25 +124,22 @@ const LogWorkoutScreen = ({ navigation }) => {
     const result = await logWorkout(user.uid, workoutData);
 
     if (result.success) {
-      setSuccess(true);
+      haptics.success();
+      showToast('Workout saved successfully!', 'success');
 
-      // Send congratulatory notification
       await sendImmediateNotification(
-        '✅ Workout Logged!',
+        'Workout Logged!',
         `Great job logging ${exerciseName}${calories ? ` — ${calories} calories burned!` : '!'}`
       );
 
-      // Check for streak milestone
-      const newStreak = streak + (/* today */ 1);
+      const newStreak = streak + 1;
       await sendStreakMilestoneNotification(newStreak, profile?.name?.split(' ')[0]);
 
-      // Reset form after short delay
-      setTimeout(() => {
-        resetForm();
-        setSuccess(false);
-      }, 1500);
+      resetForm();
+      setTimeout(() => navigation.navigate(ROUTES.DASHBOARD), 500);
     } else {
-      Alert.alert('Error', result.error || 'Failed to save workout. Please try again.');
+      haptics.warning();
+      showToast(result.error || 'Failed to save workout. Please try again.', 'error');
     }
   };
 
@@ -150,11 +157,10 @@ const LogWorkoutScreen = ({ navigation }) => {
     setErrors({});
   };
 
-  // ─── Date Cycle (simple prev/next day) ───────────────────────────────────────
   const adjustDate = (days) => {
     const d = new Date(workoutDate);
     d.setDate(d.getDate() + days);
-    if (d > new Date()) return; // Cannot log future workouts
+    if (d > new Date()) return;
     setWorkoutDate(d);
   };
 
@@ -163,7 +169,7 @@ const LogWorkoutScreen = ({ navigation }) => {
 
   const inputStyle = (field) => ({
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 8,
     borderWidth: 1.5,
     borderColor: errors[field] ? COLORS.danger : (isDark ? COLORS.dark.border : COLORS.light.border),
     backgroundColor: isDark ? COLORS.dark.inputBg : COLORS.light.inputBg,
@@ -184,7 +190,6 @@ const LogWorkoutScreen = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Log Workout</Text>
           <TouchableOpacity onPress={resetForm}>
@@ -197,15 +202,48 @@ const LogWorkoutScreen = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Success Banner */}
-          {success && (
-            <View style={[styles.successBanner, { backgroundColor: COLORS.success }]}>
-              <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-              <Text style={styles.successText}>Workout saved successfully! 🎉</Text>
+          {/* Repeat Recent */}
+          {recentExercises.length > 0 && (
+            <View style={styles.fieldGroup}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Repeat Recent</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.quickPickRow}
+              >
+                {recentExercises.map((w) => (
+                  <TouchableOpacity
+                    key={w.id}
+                    onPress={() => {
+                      haptics.selection();
+                      handleExerciseSelect(w.exerciseName);
+                      if (w.sets) setSets(String(w.sets));
+                      if (w.reps) setReps(String(w.reps));
+                      if (w.weight) setWeight(String(w.weight));
+                      if (w.duration) handleDurationChange(String(w.duration));
+                    }}
+                    style={[
+                      styles.recentCard,
+                      {
+                        backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
+                        borderColor: exerciseName === w.exerciseName ? COLORS.primary : (isDark ? COLORS.dark.border : COLORS.light.border),
+                      },
+                    ]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.recentName, { color: colors.text }]} numberOfLines={1}>
+                      {w.exerciseName}
+                    </Text>
+                    <Text style={[styles.recentMeta, { color: colors.textMuted }]}>
+                      {[w.sets && `${w.sets}x${w.reps || ''}`, w.weight && `${w.weight}kg`, w.duration && `${w.duration}m`].filter(Boolean).join(' · ')}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
 
-          {/* ── Popular Exercises Quick Pick ── */}
+          {/* Quick Pick */}
           <View style={styles.fieldGroup}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>Quick Pick</Text>
             <ScrollView
@@ -214,18 +252,18 @@ const LogWorkoutScreen = ({ navigation }) => {
               contentContainerStyle={styles.quickPickRow}
             >
               {[
-                { name: 'Running', icon: 'walk-outline', color: '#F59E0B' },
-                { name: 'Bench Press', icon: 'barbell-outline', color: '#6366F1' },
-                { name: 'Squat', icon: 'fitness-outline', color: '#6366F1' },
-                { name: 'Push-up', icon: 'body-outline', color: '#10B981' },
-                { name: 'Cycling', icon: 'bicycle-outline', color: '#F59E0B' },
+                { name: 'Running', icon: 'walk-outline', color: '#FBBF24' },
+                { name: 'Bench Press', icon: 'barbell-outline', color: '#3B82F6' },
+                { name: 'Squat', icon: 'fitness-outline', color: '#3B82F6' },
+                { name: 'Push-up', icon: 'body-outline', color: '#22C55E' },
+                { name: 'Cycling', icon: 'bicycle-outline', color: '#FBBF24' },
                 { name: 'HIIT', icon: 'flash-outline', color: '#EF4444' },
-                { name: 'Yoga', icon: 'leaf-outline', color: '#EC4899' },
-                { name: 'Deadlift', icon: 'barbell-outline', color: '#6366F1' },
+                { name: 'Yoga', icon: 'leaf-outline', color: '#A78BFA' },
+                { name: 'Deadlift', icon: 'barbell-outline', color: '#3B82F6' },
               ].map((ex) => (
                 <TouchableOpacity
                   key={ex.name}
-                  onPress={() => handleExerciseSelect(ex.name)}
+                  onPress={() => { haptics.selection(); handleExerciseSelect(ex.name); }}
                   style={[
                     styles.quickPickChip,
                     {
@@ -254,7 +292,7 @@ const LogWorkoutScreen = ({ navigation }) => {
             </ScrollView>
           </View>
 
-          {/* ── Exercise Picker ── */}
+          {/* Exercise Picker */}
           <View style={styles.fieldGroup}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>Exercise *</Text>
             <TouchableOpacity
@@ -288,7 +326,7 @@ const LogWorkoutScreen = ({ navigation }) => {
             )}
           </View>
 
-          {/* ── Date Picker (simple) ── */}
+          {/* Date */}
           <View style={styles.fieldGroup}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>Date</Text>
             <View
@@ -320,7 +358,7 @@ const LogWorkoutScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* ── Sets / Reps / Weight Row ── */}
+          {/* Sets / Reps / Weight */}
           <View style={styles.row}>
             <View style={[styles.fieldGroup, { flex: 1 }]}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>Sets</Text>
@@ -338,9 +376,7 @@ const LogWorkoutScreen = ({ navigation }) => {
               />
               {errors.sets && <Text style={styles.fieldError}>{errors.sets}</Text>}
             </View>
-
             <View style={{ width: 12 }} />
-
             <View style={[styles.fieldGroup, { flex: 1 }]}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>Reps</Text>
               <TextInput
@@ -357,9 +393,7 @@ const LogWorkoutScreen = ({ navigation }) => {
               />
               {errors.reps && <Text style={styles.fieldError}>{errors.reps}</Text>}
             </View>
-
             <View style={{ width: 12 }} />
-
             <View style={[styles.fieldGroup, { flex: 1.3 }]}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>Weight (kg)</Text>
               <TextInput
@@ -378,11 +412,9 @@ const LogWorkoutScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* ── Duration ── */}
+          {/* Duration */}
           <View style={styles.fieldGroup}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>
-              Duration (minutes)
-            </Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Duration (minutes)</Text>
             <View style={styles.row}>
               <TextInput
                 ref={durationRef}
@@ -400,7 +432,7 @@ const LogWorkoutScreen = ({ navigation }) => {
                 {[15, 30, 45, 60].map((min) => (
                   <TouchableOpacity
                     key={min}
-                    onPress={() => handleDurationChange(String(min))}
+                    onPress={() => { haptics.selection(); handleDurationChange(String(min)); }}
                     style={[
                       styles.durationChip,
                       {
@@ -426,16 +458,23 @@ const LogWorkoutScreen = ({ navigation }) => {
             {errors.duration && <Text style={styles.fieldError}>{errors.duration}</Text>}
           </View>
 
-          {/* ── Calories ── */}
+          {/* Calories */}
           <View style={styles.fieldGroup}>
             <View style={styles.caloriesHeader}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>
                 Calories Burned
               </Text>
               <TouchableOpacity onPress={() => setIsCaloriesManual(!isCaloriesManual)}>
-                <Text style={[styles.autoLabel, { color: COLORS.primary }]}>
-                  {isCaloriesManual ? '🔄 Auto-calculate' : '✏️ Manual'}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons
+                    name={isCaloriesManual ? 'refresh-outline' : 'create-outline'}
+                    size={14}
+                    color={COLORS.primary}
+                  />
+                  <Text style={[styles.autoLabel, { color: COLORS.primary }]}>
+                    {isCaloriesManual ? 'Auto-calculate' : 'Manual'}
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
             <View style={styles.row}>
@@ -460,14 +499,14 @@ const LogWorkoutScreen = ({ navigation }) => {
                   { backgroundColor: `${COLORS.warning}18` },
                 ]}
               >
-                <Text style={{ fontSize: 18 }}>🔥</Text>
+                <Ionicons name="flame" size={18} color={COLORS.warning} />
                 <Text style={{ color: COLORS.warning, fontWeight: '700', fontSize: 12 }}>kcal</Text>
               </View>
             </View>
             {errors.calories && <Text style={styles.fieldError}>{errors.calories}</Text>}
           </View>
 
-          {/* ── Body Weight (optional) ── */}
+          {/* Body Weight */}
           <View style={styles.fieldGroup}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>
               Body Weight Today (kg) — optional
@@ -485,7 +524,7 @@ const LogWorkoutScreen = ({ navigation }) => {
             />
           </View>
 
-          {/* ── Notes ── */}
+          {/* Notes */}
           <View style={styles.fieldGroup}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>
               Notes — optional
@@ -509,7 +548,7 @@ const LogWorkoutScreen = ({ navigation }) => {
             />
           </View>
 
-          {/* ── Save Button ── */}
+          {/* Save */}
           <TouchableOpacity
             style={[
               styles.saveBtn,
@@ -536,7 +575,6 @@ const LogWorkoutScreen = ({ navigation }) => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Exercise Picker Modal */}
       <ExercisePicker
         visible={showExercisePicker}
         onSelect={handleExerciseSelect}
@@ -560,22 +598,23 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   clearText: { fontSize: 14, fontWeight: '600' },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 24 },
-  successBanner: {
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
+  recentCard: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginRight: 8,
+    minWidth: 110,
   },
-  successText: { color: '#FFF', fontSize: 14, fontWeight: '600', flex: 1 },
+  recentName: { fontSize: 13, fontWeight: '700', marginBottom: 2 },
+  recentMeta: { fontSize: 11, fontWeight: '500' },
   fieldGroup: { marginBottom: 18 },
   label: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '600',
     marginBottom: 8,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.0,
   },
   quickPickRow: {
     flexDirection: 'row',
@@ -588,13 +627,13 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 6,
     borderWidth: 1,
   },
   exercisePickerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: 8,
     borderWidth: 1.5,
     paddingHorizontal: 14,
     paddingVertical: 14,
@@ -605,7 +644,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 14,
+    borderRadius: 8,
     borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -621,7 +660,7 @@ const styles = StyleSheet.create({
   durationChip: {
     paddingHorizontal: 10,
     paddingVertical: 7,
-    borderRadius: 10,
+    borderRadius: 6,
   },
   caloriesHeader: {
     flexDirection: 'row',
@@ -634,19 +673,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 14,
-    borderRadius: 14,
+    borderRadius: 8,
   },
   fieldError: { color: COLORS.danger, fontSize: 12, marginTop: 6, fontWeight: '500' },
   saveBtn: {
-    borderRadius: 18,
+    borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
     marginTop: 8,
   },
   saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },

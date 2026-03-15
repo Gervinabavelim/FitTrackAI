@@ -12,12 +12,24 @@ import { Ionicons } from '@expo/vector-icons';
 import useAuthStore from '../../store/authStore';
 import useWorkoutStore from '../../store/workoutStore';
 import useTheme from '../../hooks/useTheme';
+import useHaptics from '../../hooks/useHaptics';
+import { useToast } from '../../contexts/ToastContext';
 import { COLORS } from '../../utils/constants';
 import { generateWorkoutPlan } from '../../services/aiService';
-import { saveAIWorkoutPlan } from '../../services/workoutService';
+import { saveAIWorkoutPlan, getSavedPlans } from '../../services/workoutService';
 import { AILoadingState } from '../../components/LoadingSpinner';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { checkAIRateLimit } from '../../utils/rateLimiter';
+
+const FITNESS_TIPS = [
+  'Drink at least 8 glasses of water daily to stay hydrated during workouts.',
+  'Aim for 7-9 hours of sleep to maximize muscle recovery.',
+  'Warm up for 5-10 minutes before every workout to prevent injury.',
+  'Track your progress weekly — small wins add up over time.',
+  'Mix up your routine every 4-6 weeks to avoid plateaus.',
+  'Post-workout protein within 30 minutes helps muscle repair.',
+  'Rest days are just as important as workout days for progress.',
+];
 
 // ─── Day Card ─────────────────────────────────────────────────────────────────
 const DayCard = ({ day, isDark, colors }) => {
@@ -29,7 +41,7 @@ const DayCard = ({ day, isDark, colors }) => {
     cardio: COLORS.warning,
     rest: COLORS.success,
     hiit: COLORS.danger,
-    flexibility: '#EC4899',
+    flexibility: '#A78BFA',
     default: COLORS.info,
   };
   const typeColor = typeColors[day.type?.toLowerCase()] || typeColors.default;
@@ -116,9 +128,12 @@ const DayCard = ({ day, isDark, colors }) => {
           {/* Warmup */}
           {day.warmup && (
             <View style={styles.detailSection}>
-              <Text style={[styles.detailSectionTitle, { color: COLORS.success }]}>
-                🔥 Warm-up
-              </Text>
+              <View style={styles.detailTitleRow}>
+                <Ionicons name="flame-outline" size={14} color={COLORS.success} />
+                <Text style={[styles.detailSectionTitle, { color: COLORS.success }]}>
+                  Warm-up
+                </Text>
+              </View>
               <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                 {day.warmup}
               </Text>
@@ -128,16 +143,19 @@ const DayCard = ({ day, isDark, colors }) => {
           {/* Exercises */}
           {day.exercises && day.exercises.length > 0 && (
             <View style={styles.detailSection}>
-              <Text style={[styles.detailSectionTitle, { color: typeColor }]}>
-                💪 Exercises
-              </Text>
+              <View style={styles.detailTitleRow}>
+                <Ionicons name="barbell-outline" size={14} color={typeColor} />
+                <Text style={[styles.detailSectionTitle, { color: typeColor }]}>
+                  Exercises
+                </Text>
+              </View>
               {day.exercises.map((ex, idx) => (
                 <View
                   key={idx}
                   style={[
                     styles.exerciseRow,
                     {
-                      backgroundColor: isDark ? COLORS.dark.background : '#F8FAFC',
+                      backgroundColor: isDark ? COLORS.dark.background : '#F5F5F5',
                       borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
                     },
                   ]}
@@ -170,9 +188,12 @@ const DayCard = ({ day, isDark, colors }) => {
                     </Text>
                   )}
                   {ex.notes && (
-                    <Text style={[styles.exNotes, { color: colors.textSecondary }]}>
-                      💡 {ex.notes}
-                    </Text>
+                    <View style={styles.exNotesRow}>
+                      <Ionicons name="bulb-outline" size={12} color={colors.textSecondary} />
+                      <Text style={[styles.exNotes, { color: colors.textSecondary }]}>
+                        {ex.notes}
+                      </Text>
+                    </View>
                   )}
                 </View>
               ))}
@@ -182,9 +203,12 @@ const DayCard = ({ day, isDark, colors }) => {
           {/* Cooldown */}
           {day.cooldown && (
             <View style={styles.detailSection}>
-              <Text style={[styles.detailSectionTitle, { color: COLORS.info }]}>
-                ❄️ Cool-down
-              </Text>
+              <View style={styles.detailTitleRow}>
+                <Ionicons name="snow-outline" size={14} color={COLORS.info} />
+                <Text style={[styles.detailSectionTitle, { color: COLORS.info }]}>
+                  Cool-down
+                </Text>
+              </View>
               <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                 {day.cooldown}
               </Text>
@@ -199,8 +223,9 @@ const DayCard = ({ day, isDark, colors }) => {
                 { backgroundColor: `${COLORS.primary}12`, borderColor: `${COLORS.primary}30` },
               ]}
             >
-              <Text style={{ fontSize: 13, color: COLORS.primary, fontWeight: '500', lineHeight: 20 }}>
-                ✨ {day.tips}
+              <Ionicons name="sparkles" size={13} color={COLORS.primary} />
+              <Text style={{ fontSize: 13, color: COLORS.primary, fontWeight: '500', lineHeight: 20, flex: 1 }}>
+                {day.tips}
               </Text>
             </View>
           )}
@@ -215,15 +240,22 @@ const AIScreen = () => {
   const { user, profile } = useAuthStore();
   const { recentWorkouts, fetchRecentWorkouts } = useWorkoutStore();
   const { isDark, colors } = useTheme();
+  const haptics = useHaptics();
+  const { showToast } = useToast();
 
   const [plan, setPlan] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [planSaved, setPlanSaved] = useState(false);
+  const [savedPlans, setSavedPlans] = useState([]);
+  const [expandedPlanId, setExpandedPlanId] = useState(null);
+
+  const todayTip = FITNESS_TIPS[new Date().getDate() % FITNESS_TIPS.length];
 
   useEffect(() => {
     if (user?.uid) {
       fetchRecentWorkouts(user.uid);
+      getSavedPlans(user.uid).then((plans) => setSavedPlans(plans.slice(0, 3))).catch(() => {});
     }
   }, [user?.uid]);
 
@@ -240,6 +272,7 @@ const AIScreen = () => {
       return;
     }
 
+    haptics.medium();
     setGenerating(true);
     setPlan(null);
     setPlanSaved(false);
@@ -248,10 +281,7 @@ const AIScreen = () => {
       const generatedPlan = await generateWorkoutPlan(profile, recentWorkouts);
       setPlan(generatedPlan);
     } catch (error) {
-      Alert.alert(
-        'Generation Failed',
-        error.message || 'Unable to generate plan. Please check your internet connection and API key.'
-      );
+      showToast(error.message || 'Unable to generate plan. Please try again.', 'error');
     } finally {
       setGenerating(false);
     }
@@ -264,9 +294,11 @@ const AIScreen = () => {
     try {
       await saveAIWorkoutPlan(user.uid, plan);
       setPlanSaved(true);
-      Alert.alert('Plan Saved! 🎉', 'Your workout plan has been saved to your profile.');
+      haptics.success();
+      showToast('Workout plan saved!', 'success');
+      getSavedPlans(user.uid).then((plans) => setSavedPlans(plans.slice(0, 3))).catch(() => {});
     } catch (error) {
-      Alert.alert('Save Failed', 'Unable to save plan. Please try again.');
+      showToast('Unable to save plan. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
@@ -289,7 +321,8 @@ const AIScreen = () => {
             </Text>
           </View>
           <View style={[styles.aiBadge, { backgroundColor: `${COLORS.primary}20` }]}>
-            <Text style={styles.aiBadgeText}>✨ AI</Text>
+            <Ionicons name="sparkles" size={14} color={COLORS.primary} />
+            <Text style={styles.aiBadgeText}>AI</Text>
           </View>
         </View>
 
@@ -388,7 +421,7 @@ const AIScreen = () => {
 
             {/* Day Cards */}
             <Text style={[styles.sectionLabel, { color: colors.text }]}>
-              Your 7-Day Schedule
+              YOUR 7-DAY SCHEDULE
             </Text>
             {plan.days.map((day) => (
               <DayCard
@@ -410,9 +443,12 @@ const AIScreen = () => {
                   },
                 ]}
               >
-                <Text style={[styles.tipsTitle, { color: colors.text }]}>
-                  🥗 Nutrition Tips
-                </Text>
+                <View style={styles.tipsTitleRow}>
+                  <Ionicons name="nutrition-outline" size={16} color={COLORS.success} />
+                  <Text style={[styles.tipsTitle, { color: colors.text }]}>
+                    Nutrition Tips
+                  </Text>
+                </View>
                 {plan.nutritionTips.map((tip, i) => (
                   <View key={i} style={styles.tipItem}>
                     <View style={[styles.tipDot, { backgroundColor: COLORS.success }]} />
@@ -433,9 +469,12 @@ const AIScreen = () => {
                   },
                 ]}
               >
-                <Text style={[styles.tipsTitle, { color: colors.text }]}>
-                  😴 Recovery Advice
-                </Text>
+                <View style={styles.tipsTitleRow}>
+                  <Ionicons name="bed-outline" size={16} color={COLORS.info} />
+                  <Text style={[styles.tipsTitle, { color: colors.text }]}>
+                    Recovery Advice
+                  </Text>
+                </View>
                 <Text style={[styles.tipText, { color: colors.textSecondary }]}>
                   {plan.recoveryAdvice}
                 </Text>
@@ -486,7 +525,7 @@ const AIScreen = () => {
                     color="#FFF"
                   />
                   <Text style={styles.saveBtnText}>
-                    {planSaved ? 'Plan Saved ✓' : 'Save This Plan'}
+                    {planSaved ? 'Plan Saved' : 'Save This Plan'}
                   </Text>
                 </View>
               )}
@@ -497,7 +536,7 @@ const AIScreen = () => {
         {/* Empty state */}
         {!plan && !generating && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🤖</Text>
+            <Ionicons name="sparkles" size={48} color={COLORS.primary} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>
               Your AI Coach is Ready
             </Text>
@@ -505,6 +544,71 @@ const AIScreen = () => {
               Press "Generate 7-Day Plan" and your AI coach will analyze your profile and recent
               workouts to build a personalized training program just for you.
             </Text>
+
+            {/* Fitness Tip */}
+            <View
+              style={[
+                styles.tipOfDay,
+                {
+                  backgroundColor: `${COLORS.success}12`,
+                  borderColor: `${COLORS.success}30`,
+                },
+              ]}
+            >
+              <Ionicons name="bulb-outline" size={16} color={COLORS.success} />
+              <Text style={[styles.tipOfDayText, { color: COLORS.success }]}>
+                {todayTip}
+              </Text>
+            </View>
+
+            {/* Saved Plans History */}
+            {savedPlans.length > 0 && (
+              <View style={styles.savedSection}>
+                <Text style={[styles.savedTitle, { color: colors.text }]}>
+                  SAVED PLANS
+                </Text>
+                {savedPlans.map((sp) => (
+                  <TouchableOpacity
+                    key={sp.id}
+                    onPress={() => {
+                      haptics.selection();
+                      setExpandedPlanId(expandedPlanId === sp.id ? null : sp.id);
+                    }}
+                    style={[
+                      styles.savedPlanCard,
+                      {
+                        backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
+                        borderColor: expandedPlanId === sp.id ? COLORS.primary : (isDark ? COLORS.dark.border : COLORS.light.border),
+                      },
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.savedPlanHeader}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.savedPlanTitle, { color: colors.text }]} numberOfLines={1}>
+                          {sp.planTitle || 'Workout Plan'}
+                        </Text>
+                        <Text style={[styles.savedPlanDate, { color: colors.textMuted }]}>
+                          {sp.createdAt?.toDate ? sp.createdAt.toDate().toLocaleDateString() : 'Recently saved'}
+                        </Text>
+                      </View>
+                      <Ionicons
+                        name={expandedPlanId === sp.id ? 'chevron-up' : 'chevron-down'}
+                        size={16}
+                        color={colors.textMuted}
+                      />
+                    </View>
+                    {expandedPlanId === sp.id && sp.days && (
+                      <View style={styles.savedPlanDays}>
+                        {sp.days.map((day) => (
+                          <DayCard key={day.day} day={day} isDark={isDark} colors={colors} />
+                        ))}
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
@@ -527,9 +631,12 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   headerSubtitle: { fontSize: 13, marginTop: 2, fontWeight: '400' },
   aiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 6,
   },
   aiBadgeText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
   contextPill: {
@@ -538,7 +645,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 14,
+    borderRadius: 8,
     borderWidth: 1,
     padding: 12,
     flexWrap: 'wrap',
@@ -546,14 +653,9 @@ const styles = StyleSheet.create({
   contextText: { fontSize: 12, fontWeight: '500' },
   generateBtn: {
     marginHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
   },
   generateGradient: {
     backgroundColor: COLORS.primary,
@@ -566,7 +668,7 @@ const styles = StyleSheet.create({
   generateBtnText: { color: '#FFF', fontSize: 17, fontWeight: '800' },
   loadingCard: {
     marginHorizontal: 20,
-    borderRadius: 24,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 24,
     marginBottom: 20,
@@ -576,7 +678,7 @@ const styles = StyleSheet.create({
   },
   planContainer: { paddingHorizontal: 20 },
   planHeader: {
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 20,
     marginBottom: 20,
@@ -590,18 +692,19 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: 6,
   },
   planMetaChipText: { fontSize: 12, fontWeight: '600' },
   planCalories: { fontSize: 13, fontWeight: '500', marginTop: 4 },
   sectionLabel: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '600',
     marginBottom: 12,
-    letterSpacing: -0.3,
+    letterSpacing: 1.0,
+    textTransform: 'uppercase',
   },
   dayCard: {
-    borderRadius: 18,
+    borderRadius: 10,
     borderWidth: 1.5,
     marginBottom: 12,
     overflow: 'hidden',
@@ -615,7 +718,7 @@ const styles = StyleSheet.create({
   dayBadge: {
     width: 56,
     height: 56,
-    borderRadius: 14,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -634,16 +737,22 @@ const styles = StyleSheet.create({
   typePill: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 6,
   },
   typePillText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
   dayDetail: { paddingHorizontal: 16, paddingBottom: 16 },
   divider: { height: 1, marginBottom: 12 },
   detailSection: { marginBottom: 14 },
-  detailSectionTitle: { fontSize: 13, fontWeight: '700', marginBottom: 8 },
+  detailTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  detailSectionTitle: { fontSize: 13, fontWeight: '700' },
   detailText: { fontSize: 13, lineHeight: 20 },
   exerciseRow: {
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
     padding: 12,
     marginBottom: 8,
@@ -659,25 +768,40 @@ const styles = StyleSheet.create({
   exStatBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 6,
     fontSize: 11,
     fontWeight: '700',
   },
   exSubDetail: { fontSize: 12, marginTop: 2 },
-  exNotes: { fontSize: 12, marginTop: 4, fontStyle: 'italic' },
+  exNotesRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    marginTop: 4,
+  },
+  exNotes: { fontSize: 12, fontStyle: 'italic', flex: 1 },
   tipBox: {
-    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    borderRadius: 8,
     borderWidth: 1,
     padding: 14,
     marginTop: 8,
   },
   tipsCard: {
-    borderRadius: 18,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 16,
     marginBottom: 12,
   },
-  tipsTitle: { fontSize: 15, fontWeight: '700', marginBottom: 12 },
+  tipsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  tipsTitle: { fontSize: 15, fontWeight: '700' },
   tipItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -696,23 +820,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 14,
     marginBottom: 20,
   },
   progressionText: { fontSize: 13, lineHeight: 20, flex: 1, fontWeight: '500' },
   saveBtn: {
-    borderRadius: 18,
+    borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
   saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -721,13 +840,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 40,
   },
-  emptyEmoji: { fontSize: 64, marginBottom: 16 },
-  emptyTitle: { fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 12 },
+  emptyTitle: { fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 12, marginTop: 16 },
   emptySubtext: {
     fontSize: 14,
     lineHeight: 24,
     textAlign: 'center',
+    marginBottom: 16,
   },
+  tipOfDay: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 20,
+    width: '100%',
+  },
+  tipOfDayText: { fontSize: 13, fontWeight: '500', lineHeight: 20, flex: 1 },
+  savedSection: { width: '100%' },
+  savedTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 12,
+    letterSpacing: 1.0,
+    textTransform: 'uppercase',
+  },
+  savedPlanCard: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 10,
+  },
+  savedPlanHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  savedPlanTitle: { fontSize: 14, fontWeight: '700' },
+  savedPlanDate: { fontSize: 12, marginTop: 2 },
+  savedPlanDays: { marginTop: 12 },
 });
 
 export default AIScreen;
