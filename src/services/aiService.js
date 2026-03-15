@@ -1,4 +1,4 @@
-import openaiClient, { MODEL, MAX_TOKENS } from '../config/openai';
+import { chatCompletion, MAX_TOKENS } from '../config/openai';
 import { format } from 'date-fns';
 import { sanitizeText, sanitizeInt, sanitizeFloat, sanitizeEnum } from '../utils/sanitize';
 
@@ -124,17 +124,15 @@ Respond with this EXACT JSON structure:
 }`;
 
   try {
-    const response = await openaiClient.chat.completions.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      temperature: 0.7,
+    const content = await chatCompletion({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
+      temperature: 0.7,
+      maxTokens: MAX_TOKENS,
     });
 
-    const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('No response from AI');
     }
@@ -163,11 +161,11 @@ Respond with this EXACT JSON structure:
     if (error instanceof SyntaxError) {
       throw new Error('Failed to parse AI response. Please try again.');
     }
-    if (error.status === 429) {
+    if (error.code === 'functions/resource-exhausted') {
       throw new Error('AI service rate limit reached. Please wait a moment and try again.');
     }
-    if (error.status === 401) {
-      throw new Error('Invalid OpenAI API key. Please check your configuration.');
+    if (error.code === 'functions/unauthenticated') {
+      throw new Error('You must be signed in to use AI features.');
     }
     console.error('generateWorkoutPlan error:', error);
     throw new Error(error.message || 'Failed to generate workout plan. Please try again.');
@@ -186,10 +184,7 @@ export async function generateMotivationalTip(userProfile, streak = 0) {
   who has a current workout streak of ${streak} days. Be specific, actionable, and encouraging.`;
 
   try {
-    const response = await openaiClient.chat.completions.create({
-      model: MODEL,
-      max_tokens: 150,
-      temperature: 0.8,
+    const content = await chatCompletion({
       messages: [
         {
           role: 'system',
@@ -197,9 +192,11 @@ export async function generateMotivationalTip(userProfile, streak = 0) {
         },
         { role: 'user', content: prompt },
       ],
+      temperature: 0.8,
+      maxTokens: 150,
     });
 
-    return response.choices[0]?.message?.content?.trim() || 'Keep pushing — every rep counts!';
+    return content?.trim() || 'Keep pushing — every rep counts!';
   } catch (error) {
     console.error('generateMotivationalTip error:', error);
     return 'Consistency is the key to transformation. Keep showing up!';

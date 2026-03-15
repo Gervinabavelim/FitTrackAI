@@ -1,0 +1,13 @@
+{
+  "name": "fittrackai-functions",
+  "description": "Firebase Cloud Functions for FitTrack AI",
+  "engines": {
+    "node": "24"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^11.11.0",
+    "firebase-functions": "^4.5.0",
+    "openai": "^4.20.0"
+  }
+}
