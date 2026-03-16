@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import useAuthStore from '../../store/authStore';
 import useTheme from '../../hooks/useTheme';
 import { COLORS, ROUTES } from '../../utils/constants';
+import { trackEvent } from '../../services/analyticsService';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { checkAuthRateLimit } from '../../utils/rateLimiter';
 
@@ -193,7 +194,12 @@ const LoginScreen = ({ navigation }) => {
     const rateCheck = checkAuthRateLimit();
     if (!rateCheck.allowed) { setFieldErrors({ email: rateCheck.message }); shake(); return; }
     const result = await login(email.trim().toLowerCase(), password);
-    if (!result.success) shake();
+    if (result.success) {
+      trackEvent('login_success');
+    } else {
+      trackEvent('login_failed');
+      shake();
+    }
   };
 
   const getInputBorderColor = (field, focusAnim) => {

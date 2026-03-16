@@ -20,6 +20,8 @@ import { saveAIWorkoutPlan, getSavedPlans } from '../../services/workoutService'
 import { AILoadingState } from '../../components/LoadingSpinner';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { checkAIRateLimit } from '../../utils/rateLimiter';
+import useNetworkStatus from '../../hooks/useNetworkStatus';
+import { trackEvent } from '../../services/analyticsService';
 
 const FITNESS_TIPS = [
   'Drink at least 8 glasses of water daily to stay hydrated during workouts.',
@@ -249,15 +251,31 @@ const AIScreen = () => {
   const [planSaved, setPlanSaved] = useState(false);
   const [savedPlans, setSavedPlans] = useState([]);
   const [expandedPlanId, setExpandedPlanId] = useState(null);
+  const [loadingSavedPlans, setLoadingSavedPlans] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const { isConnected } = useNetworkStatus();
 
   const todayTip = FITNESS_TIPS[new Date().getDate() % FITNESS_TIPS.length];
 
   useEffect(() => {
     if (user?.uid) {
       fetchRecentWorkouts(user.uid);
-      getSavedPlans(user.uid).then((plans) => setSavedPlans(plans.slice(0, 3))).catch(() => {});
+      setLoadingSavedPlans(true);
+      getSavedPlans(user.uid)
+        .then((plans) => setSavedPlans(plans.slice(0, 3)))
+        .catch(() => {})
+        .finally(() => setLoadingSavedPlans(false));
     }
   }, [user?.uid]);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setCooldownSeconds((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownSeconds]);
 
   // ─── Generate Plan ───────────────────────────────────────────────────────────
   const handleGenerate = async () => {
@@ -266,9 +284,14 @@ const AIScreen = () => {
       return;
     }
 
+    if (!isConnected) {
+      showToast("You're offline. Connect to the internet to generate a plan.", 'warning');
+      return;
+    }
+
     const rateCheck = checkAIRateLimit();
     if (!rateCheck.allowed) {
-      Alert.alert('Slow Down', rateCheck.message);
+      showToast(rateCheck.message, 'warning');
       return;
     }
 
@@ -280,6 +303,8 @@ const AIScreen = () => {
     try {
       const generatedPlan = await generateWorkoutPlan(profile, recentWorkouts);
       setPlan(generatedPlan);
+      setCooldownSeconds(30);
+      trackEvent('ai_plan_generated', { goal: profile.fitnessGoal });
     } catch (error) {
       showToast(error.message || 'Unable to generate plan. Please try again.', 'error');
     } finally {
@@ -353,16 +378,18 @@ const AIScreen = () => {
           <TouchableOpacity
             style={[
               styles.generateBtn,
-              { opacity: generating ? 0.7 : 1 },
+              { opacity: cooldownSeconds > 0 ? 0.6 : 1 },
             ]}
             onPress={handleGenerate}
-            disabled={generating}
+            disabled={generating || cooldownSeconds > 0}
             activeOpacity={0.85}
           >
             <View style={styles.generateGradient}>
               <Ionicons name="sparkles" size={22} color="#FFF" />
               <Text style={styles.generateBtnText}>
-                {plan ? 'Regenerate Plan' : 'Generate 7-Day Plan'}
+                {cooldownSeconds > 0
+                  ? `Wait ${cooldownSeconds}s`
+                  : plan ? 'Regenerate Plan' : 'Generate 7-Day Plan'}
               </Text>
             </View>
           </TouchableOpacity>

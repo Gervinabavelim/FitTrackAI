@@ -1,6 +1,7 @@
 import { chatCompletion, MAX_TOKENS } from '../config/openai';
 import { format } from 'date-fns';
 import { sanitizeText, sanitizeInt, sanitizeFloat, sanitizeEnum } from '../utils/sanitize';
+import { captureException } from '../config/sentry';
 
 /**
  * Generate a personalized 7-day workout plan using OpenAI gpt-4o-mini
@@ -167,6 +168,7 @@ Respond with this EXACT JSON structure:
     if (error.code === 'functions/unauthenticated') {
       throw new Error('You must be signed in to use AI features.');
     }
+    captureException(error);
     console.error('generateWorkoutPlan error:', error);
     throw new Error(error.message || 'Failed to generate workout plan. Please try again.');
   }
@@ -198,6 +200,7 @@ export async function generateMotivationalTip(userProfile, streak = 0) {
 
     return content?.trim() || 'Keep pushing — every rep counts!';
   } catch (error) {
+    captureException(error);
     console.error('generateMotivationalTip error:', error);
     return 'Consistency is the key to transformation. Keep showing up!';
   }

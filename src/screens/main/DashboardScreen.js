@@ -18,6 +18,9 @@ import { COLORS, ROUTES } from '../../utils/constants';
 import { formatDuration } from '../../utils/calculations';
 import WorkoutCard from '../../components/WorkoutCard';
 import StatCard from '../../components/StatCard';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import useNetworkStatus from '../../hooks/useNetworkStatus';
+import { useToast } from '../../contexts/ToastContext';
 
 const DashboardScreen = ({ navigation }) => {
   const { user, profile } = useAuthStore();
@@ -36,7 +39,10 @@ const DashboardScreen = ({ navigation }) => {
 
   const { isDark, colors } = useTheme();
   const haptics = useHaptics();
+  const { isConnected } = useNetworkStatus();
+  const { showToast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
@@ -57,8 +63,8 @@ const DashboardScreen = ({ navigation }) => {
 
   useEffect(() => {
     if (user?.uid) {
-      fetchWorkouts(user.uid);
-      fetchRecentWorkouts(user.uid);
+      Promise.all([fetchWorkouts(user.uid), fetchRecentWorkouts(user.uid)])
+        .finally(() => setInitialLoad(false));
     }
   }, [user?.uid]);
 
@@ -67,6 +73,10 @@ const DashboardScreen = ({ navigation }) => {
   }, [workouts]);
 
   const onRefresh = useCallback(async () => {
+    if (!isConnected) {
+      showToast("You're offline. Pull to refresh when connected.", 'warning');
+      return;
+    }
     setRefreshing(true);
     if (user?.uid) {
       await fetchWorkouts(user.uid);
@@ -74,7 +84,7 @@ const DashboardScreen = ({ navigation }) => {
       computeWeeklyStats();
     }
     setRefreshing(false);
-  }, [user?.uid]);
+  }, [user?.uid, isConnected]);
 
   const handleDeleteWorkout = async (workoutId) => {
     if (user?.uid) {
@@ -93,6 +103,19 @@ const DashboardScreen = ({ navigation }) => {
       : 0;
 
   const firstName = profile?.name?.split(' ')[0] || 'Athlete';
+
+  if (initialLoad && loading) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: isDark ? COLORS.dark.background : COLORS.light.background },
+        ]}
+      >
+        <LoadingSpinner size="large" message="Loading your dashboard..." fullScreen />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView

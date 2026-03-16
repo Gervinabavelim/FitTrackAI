@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { auth, db } from '../config/firebase';
 import { sanitizeProfileData, sanitizeEmail } from '../utils/sanitize';
+import { captureException } from '../config/sentry';
 
 const useAuthStore = create((set, get) => ({
   user: null,
@@ -36,6 +37,7 @@ const useAuthStore = create((set, get) => ({
           console.log('[AuthStore] Profile fetched, hasProfile:', !!profileData);
           set({ user: firebaseUser, profile: profileData, loading: false, authError: null });
         } catch (error) {
+          captureException(error);
           console.error('[AuthStore] Error fetching profile:', error.message);
           set({ user: firebaseUser, profile: null, loading: false });
         }
@@ -93,6 +95,7 @@ const useAuthStore = create((set, get) => ({
       set({ profile, loading: false });
       return { success: true };
     } catch (error) {
+      captureException(error);
       console.error('Error saving profile:', error);
       set({ loading: false });
       return { success: false, error: error.message };
@@ -114,6 +117,7 @@ const useAuthStore = create((set, get) => ({
       set({ profile: updatedProfile, loading: false });
       return { success: true };
     } catch (error) {
+      captureException(error);
       console.error('Error updating profile:', error);
       set({ loading: false });
       return { success: false, error: error.message };

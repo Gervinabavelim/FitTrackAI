@@ -7,6 +7,7 @@ import {
   getWorkoutsByDateRange,
 } from '../services/workoutService';
 import { calculateStreak } from '../utils/calculations';
+import { captureException } from '../config/sentry';
 
 const useWorkoutStore = create((set, get) => ({
   workouts: [],
@@ -27,6 +28,7 @@ const useWorkoutStore = create((set, get) => ({
       const totalCalories = workouts.reduce((sum, w) => sum + (w.calories || 0), 0);
       set({ workouts, streak, totalCalories, loading: false });
     } catch (error) {
+      captureException(error);
       console.error('Error fetching workouts:', error);
       set({ error: error.message, loading: false });
     }
@@ -39,6 +41,7 @@ const useWorkoutStore = create((set, get) => ({
       const recentWorkouts = await getRecentWorkouts(userId, 10);
       set({ recentWorkouts, loading: false });
     } catch (error) {
+      captureException(error);
       console.error('Error fetching recent workouts:', error);
       set({ error: error.message, loading: false });
     }
@@ -51,6 +54,7 @@ const useWorkoutStore = create((set, get) => ({
       const workouts = await getWorkoutsByDateRange(userId, startDate, endDate);
       return workouts;
     } catch (error) {
+      captureException(error);
       console.error('Error fetching workouts by range:', error);
       set({ error: error.message, loading: false });
       return [];
@@ -79,6 +83,7 @@ const useWorkoutStore = create((set, get) => ({
       });
       return { success: true, workout: newWorkout };
     } catch (error) {
+      captureException(error);
       console.error('Error logging workout:', error);
       set({ error: error.message, loading: false });
       return { success: false, error: error.message };
@@ -103,6 +108,7 @@ const useWorkoutStore = create((set, get) => ({
       });
       return { success: true };
     } catch (error) {
+      captureException(error);
       console.error('Error removing workout:', error);
       set({ error: error.message, loading: false });
       return { success: false, error: error.message };

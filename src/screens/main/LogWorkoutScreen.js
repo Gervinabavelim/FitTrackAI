@@ -8,7 +8,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +23,8 @@ import ExercisePicker from '../../components/ExercisePicker';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { sendImmediateNotification, sendStreakMilestoneNotification } from '../../services/notificationService';
 import { checkWorkoutLogRateLimit } from '../../utils/rateLimiter';
+import useNetworkStatus from '../../hooks/useNetworkStatus';
+import { trackEvent } from '../../services/analyticsService';
 
 const LogWorkoutScreen = ({ navigation }) => {
   const { user, profile } = useAuthStore();
@@ -31,6 +32,7 @@ const LogWorkoutScreen = ({ navigation }) => {
   const { isDark, colors } = useTheme();
   const haptics = useHaptics();
   const { showToast } = useToast();
+  const { isConnected } = useNetworkStatus();
 
   const [exerciseName, setExerciseName] = useState('');
   const [sets, setSets] = useState('');
@@ -103,9 +105,14 @@ const LogWorkoutScreen = ({ navigation }) => {
   const handleSave = async () => {
     if (!validate()) return;
 
+    if (!isConnected) {
+      showToast("You're offline. Connect to the internet to save your workout.", 'warning');
+      return;
+    }
+
     const rateCheck = checkWorkoutLogRateLimit();
     if (!rateCheck.allowed) {
-      Alert.alert('Slow Down', rateCheck.message);
+      showToast(rateCheck.message, 'warning');
       return;
     }
 
@@ -126,6 +133,7 @@ const LogWorkoutScreen = ({ navigation }) => {
     if (result.success) {
       haptics.success();
       showToast('Workout saved successfully!', 'success');
+      trackEvent('workout_logged', { exercise: exerciseName });
 
       await sendImmediateNotification(
         'Workout Logged!',
