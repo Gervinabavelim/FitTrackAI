@@ -42,7 +42,7 @@ export async function registerForPushNotifications() {
   // Get Expo push token
   try {
     const { data: token } = await Notifications.getExpoPushTokenAsync({
-      projectId: 'YOUR_EAS_PROJECT_ID', // Replace with your EAS project ID
+      projectId: 'f9dd5026-b73f-4f2e-aa49-19382c7f5d1a',
     });
 
     // Android channel setup

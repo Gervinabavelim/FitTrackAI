@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0F172A"
+      "backgroundColor": "#0A0A0A"
     },
     "ios": {
       "supportsTablet": true,
@@ -22,7 +22,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0F172A"
+        "backgroundColor": "#0A0A0A"
       },
       "package": "com.fittrackai.app",
       "permissions": [
@@ -39,7 +39,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#6366F1",
+          "color": "#3B82F6",
           "sounds": [],
           "androidMode": "default",
           "androidCollapsedTitle": "FitTrack AI"
@@ -50,9 +50,10 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "f9dd5026-b73f-4f2e-aa49-19382c7f5d1a"
       }
     },
-    "scheme": "fittrack-ai"
+    "scheme": "fittrack-ai",
+    "owner": "gervin"
   }
 }
