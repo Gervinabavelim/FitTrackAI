@@ -42,7 +42,7 @@ export async function addWorkout(userId, workoutData) {
       createdAt: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('addWorkout error:', error);
+    // Error propagated to caller
     throw new Error(`Failed to save workout: ${error.message}`);
   }
 }
@@ -54,7 +54,7 @@ export async function getWorkouts(userId) {
     const snapshot = await workoutsRef.orderBy('date', 'desc').get();
     return snapshot.docs.map(docToWorkout);
   } catch (error) {
-    console.error('getWorkouts error:', error);
+    // Error propagated to caller
     throw new Error(`Failed to fetch workouts: ${error.message}`);
   }
 }
@@ -66,7 +66,7 @@ export async function getRecentWorkouts(userId, count = 10) {
     const snapshot = await workoutsRef.orderBy('date', 'desc').limit(count).get();
     return snapshot.docs.map(docToWorkout);
   } catch (error) {
-    console.error('getRecentWorkouts error:', error);
+    // Error propagated to caller
     throw new Error(`Failed to fetch recent workouts: ${error.message}`);
   }
 }
@@ -82,7 +82,7 @@ export async function getWorkoutsByDateRange(userId, startDate, endDate) {
       .get();
     return snapshot.docs.map(docToWorkout);
   } catch (error) {
-    console.error('getWorkoutsByDateRange error:', error);
+    // Error propagated to caller
     throw new Error(`Failed to fetch workouts by date range: ${error.message}`);
   }
 }
@@ -97,7 +97,7 @@ export async function getWorkout(userId, workoutId) {
     if (!docSnap.exists) return null;
     return docToWorkout(docSnap);
   } catch (error) {
-    console.error('getWorkout error:', error);
+    // Error propagated to caller
     throw new Error(`Failed to fetch workout: ${error.message}`);
   }
 }
@@ -110,7 +110,7 @@ export async function deleteWorkout(userId, workoutId) {
       .collection('workouts').doc(workoutId)
       .delete();
   } catch (error) {
-    console.error('deleteWorkout error:', error);
+    // Error propagated to caller
     throw new Error(`Failed to delete workout: ${error.message}`);
   }
 }
@@ -127,7 +127,7 @@ export async function saveAIWorkoutPlan(userId, plan) {
     const docRef = await plansRef.add(payload);
     return { id: docRef.id, ...plan, createdAt: new Date().toISOString() };
   } catch (error) {
-    console.error('saveAIWorkoutPlan error:', error);
+    // Error propagated to caller
     throw new Error(`Failed to save workout plan: ${error.message}`);
   }
 }
@@ -139,7 +139,7 @@ export async function getSavedPlans(userId) {
     const snapshot = await plansRef.orderBy('createdAt', 'desc').limit(5).get();
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
   } catch (error) {
-    console.error('getSavedPlans error:', error);
+    // Error propagated to caller
     throw new Error(`Failed to fetch plans: ${error.message}`);
   }
 }

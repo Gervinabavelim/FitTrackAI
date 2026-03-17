@@ -169,7 +169,7 @@ Respond with this EXACT JSON structure:
       throw new Error('You must be signed in to use AI features.');
     }
     captureException(error);
-    console.error('generateWorkoutPlan error:', error);
+    // Sentry captures this
     throw new Error(error.message || 'Failed to generate workout plan. Please try again.');
   }
 }
@@ -201,7 +201,7 @@ export async function generateMotivationalTip(userProfile, streak = 0) {
     return content?.trim() || 'Keep pushing — every rep counts!';
   } catch (error) {
     captureException(error);
-    console.error('generateMotivationalTip error:', error);
+    // Sentry captures this
     return 'Consistency is the key to transformation. Keep showing up!';
   }
 }

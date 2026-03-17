@@ -20,7 +20,7 @@ Notifications.setNotificationHandler({
  */
 export async function registerForPushNotifications() {
   if (!Device.isDevice) {
-    console.log('Push notifications require a physical device.');
+    // Push notifications require a physical device
     return null;
   }
 
@@ -35,7 +35,7 @@ export async function registerForPushNotifications() {
   }
 
   if (finalStatus !== 'granted') {
-    console.log('Notification permission denied.');
+    // Permission denied
     return null;
   }
 
@@ -66,7 +66,7 @@ export async function registerForPushNotifications() {
     await AsyncStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, 'true');
     return token;
   } catch (error) {
-    console.error('Failed to get push token:', error);
+    // Failed to get push token
     return null;
   }
 }
@@ -99,7 +99,7 @@ export async function scheduleDailyWorkoutReminder(userName = 'Champ') {
   });
 
   await AsyncStorage.setItem('@fittrack_daily_notif_id', identifier);
-  console.log('Daily reminder scheduled:', identifier);
+  // Daily reminder scheduled
   return identifier;
 }
 
@@ -112,7 +112,7 @@ export async function cancelDailyWorkoutReminder() {
       await AsyncStorage.removeItem('@fittrack_daily_notif_id');
     }
   } catch (error) {
-    console.error('cancelDailyWorkoutReminder error:', error);
+    // Silently fail on cancel
   }
 }
 
@@ -142,7 +142,7 @@ export async function scheduleWeeklyProgressNotification(userName = 'Athlete') {
   });
 
   await AsyncStorage.setItem('@fittrack_weekly_notif_id', identifier);
-  console.log('Weekly progress notification scheduled:', identifier);
+  // Weekly progress notification scheduled
   return identifier;
 }
 
@@ -155,7 +155,7 @@ export async function cancelWeeklyProgressNotification() {
       await AsyncStorage.removeItem('@fittrack_weekly_notif_id');
     }
   } catch (error) {
-    console.error('cancelWeeklyProgressNotification error:', error);
+    // Silently fail on cancel
   }
 }
 
@@ -225,7 +225,7 @@ export async function setupNotifications(userName) {
 
     return true;
   } catch (error) {
-    console.error('setupNotifications error:', error);
+    // Setup failed silently
     return false;
   }
 }

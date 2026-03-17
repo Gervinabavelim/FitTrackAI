@@ -11,34 +11,27 @@ const useAuthStore = create((set, get) => ({
 
   // Initialize auth listener
   initAuth: () => {
-    console.log('[AuthStore] initAuth called, setting up onAuthStateChanged...');
-
     // Timeout fallback: if Firebase doesn't respond within 5 seconds, stop loading
     const timeout = setTimeout(() => {
       const { loading } = get();
       if (loading) {
-        console.warn('[AuthStore] Firebase auth timed out after 5s, proceeding without auth');
         set({ user: null, profile: null, loading: false });
       }
     }, 5000);
 
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       clearTimeout(timeout);
-      console.log('[AuthStore] onAuthStateChanged fired, user:', firebaseUser?.uid || 'null');
       if (firebaseUser) {
         try {
-          console.log('[AuthStore] Fetching profile from Firestore...');
           const profilePromise = db.collection('users').doc(firebaseUser.uid).get();
           const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Firestore timeout')), 5000)
           );
           const profileDoc = await Promise.race([profilePromise, timeoutPromise]);
           const profileData = profileDoc.exists ? profileDoc.data() : null;
-          console.log('[AuthStore] Profile fetched, hasProfile:', !!profileData);
           set({ user: firebaseUser, profile: profileData, loading: false, authError: null });
         } catch (error) {
           captureException(error);
-          console.error('[AuthStore] Error fetching profile:', error.message);
           set({ user: firebaseUser, profile: null, loading: false });
         }
       } else {
@@ -96,7 +89,7 @@ const useAuthStore = create((set, get) => ({
       return { success: true };
     } catch (error) {
       captureException(error);
-      console.error('Error saving profile:', error);
+      captureException(error);
       set({ loading: false });
       return { success: false, error: error.message };
     }
@@ -118,7 +111,7 @@ const useAuthStore = create((set, get) => ({
       return { success: true };
     } catch (error) {
       captureException(error);
-      console.error('Error updating profile:', error);
+      captureException(error);
       set({ loading: false });
       return { success: false, error: error.message };
     }
@@ -142,7 +135,7 @@ const useAuthStore = create((set, get) => ({
       await auth.signOut();
       set({ user: null, profile: null, loading: false });
     } catch (error) {
-      console.error('Logout error:', error);
+      captureException(error);
       set({ loading: false });
     }
   },

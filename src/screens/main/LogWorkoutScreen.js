@@ -20,13 +20,14 @@ import { useToast } from '../../contexts/ToastContext';
 import { COLORS, ROUTES } from '../../utils/constants';
 import { estimateCalories } from '../../utils/calculations';
 import ExercisePicker from '../../components/ExercisePicker';
+import RestTimer from '../../components/RestTimer';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { sendImmediateNotification, sendStreakMilestoneNotification } from '../../services/notificationService';
 import { checkWorkoutLogRateLimit } from '../../utils/rateLimiter';
 import useNetworkStatus from '../../hooks/useNetworkStatus';
 import { trackEvent } from '../../services/analyticsService';
 
-const LogWorkoutScreen = ({ navigation }) => {
+const LogWorkoutScreen = ({ navigation, route }) => {
   const { user, profile } = useAuthStore();
   const { logWorkout, loading, streak, recentWorkouts, fetchRecentWorkouts } = useWorkoutStore();
   const { isDark, colors } = useTheme();
@@ -47,6 +48,22 @@ const LogWorkoutScreen = ({ navigation }) => {
 
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // Pre-fill form when editing an existing workout
+  useEffect(() => {
+    const editWorkout = route?.params?.editWorkout;
+    if (editWorkout) {
+      setExerciseName(editWorkout.exerciseName || '');
+      if (editWorkout.sets) setSets(String(editWorkout.sets));
+      if (editWorkout.reps) setReps(String(editWorkout.reps));
+      if (editWorkout.weight) setWeight(String(editWorkout.weight));
+      if (editWorkout.duration) setDuration(String(editWorkout.duration));
+      if (editWorkout.calories) { setCalories(String(editWorkout.calories)); setIsCaloriesManual(true); }
+      if (editWorkout.bodyWeight) setBodyWeight(String(editWorkout.bodyWeight));
+      if (editWorkout.notes) setNotes(editWorkout.notes);
+      if (editWorkout.date) setWorkoutDate(new Date(editWorkout.date));
+    }
+  }, [route?.params?.editWorkout]);
 
   useEffect(() => {
     if (user?.uid) fetchRecentWorkouts(user.uid);
@@ -531,6 +548,9 @@ const LogWorkoutScreen = ({ navigation }) => {
               maxLength={6}
             />
           </View>
+
+          {/* Rest Timer */}
+          <RestTimer />
 
           {/* Notes */}
           <View style={styles.fieldGroup}>

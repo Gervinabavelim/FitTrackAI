@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -90,6 +91,14 @@ const DashboardScreen = ({ navigation }) => {
     if (user?.uid) {
       await removeWorkout(user.uid, workoutId);
     }
+  };
+
+  const handleShareStreak = async () => {
+    try {
+      await Share.share({
+        message: `I'm on a ${streak}-day workout streak with FitTrack AI! ${totalCalories} calories burned so far. Let's go!`,
+      });
+    } catch {}
   };
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -186,9 +195,16 @@ const DashboardScreen = ({ navigation }) => {
               </Text>
             </View>
           </View>
-          <Text style={[styles.todayDate, { color: colors.textMuted }]}>
-            {format(new Date(), 'MMM d')}
-          </Text>
+          <View style={styles.streakRight}>
+            {streak > 0 && (
+              <TouchableOpacity onPress={handleShareStreak} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="share-outline" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
+            <Text style={[styles.todayDate, { color: colors.textMuted }]}>
+              {format(new Date(), 'MMM d')}
+            </Text>
+          </View>
         </View>
 
         {/* Quick Actions */}
@@ -308,6 +324,7 @@ const DashboardScreen = ({ navigation }) => {
                 key={workout.id}
                 workout={workout}
                 onDelete={handleDeleteWorkout}
+                onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT, { editWorkout: workout })}
                 compact
               />
             ))
@@ -350,6 +367,7 @@ const DashboardScreen = ({ navigation }) => {
                 key={workout.id}
                 workout={workout}
                 onDelete={handleDeleteWorkout}
+                onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT, { editWorkout: workout })}
                 compact
               />
             ))}
@@ -413,6 +431,7 @@ const styles = StyleSheet.create({
   streakLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   streakCount: { fontSize: 18, fontWeight: '800' },
   streakLabel: { fontSize: 12, fontWeight: '500', marginTop: 2 },
+  streakRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   todayDate: { fontSize: 14, fontWeight: '600' },
   quickActions: {
     flexDirection: 'row',

@@ -21,6 +21,7 @@ import { calculateBMI, idealWeightRange } from '../../utils/calculations';
 import { cancelAllNotifications, setupNotifications } from '../../services/notificationService';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { checkProfileUpdateRateLimit } from '../../utils/rateLimiter';
+import { exportWorkoutsCSV } from '../../utils/exportData';
 
 const ProfileScreen = () => {
   const { user, profile, updateProfile, logout, loading } = useAuthStore();
@@ -33,6 +34,7 @@ const ProfileScreen = () => {
   const [editData, setEditData] = useState({});
   const [errors, setErrors] = useState({});
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const bmiInfo = profile
     ? calculateBMI(profile.weightKg, profile.heightCm)
@@ -112,6 +114,23 @@ const ProfileScreen = () => {
       await setupNotifications(firstName);
     } else {
       await cancelAllNotifications();
+    }
+  };
+
+  // ─── Export Data ─────────────────────────────────────────────────────────────
+  const handleExport = async () => {
+    if (workouts.length === 0) {
+      showToast('No workouts to export yet.', 'warning');
+      return;
+    }
+    setExporting(true);
+    try {
+      await exportWorkoutsCSV(workouts);
+      showToast('Workout data exported!', 'success');
+    } catch (error) {
+      showToast(error.message || 'Export failed.', 'error');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -490,6 +509,26 @@ const ProfileScreen = () => {
               thumbColor={notificationsEnabled ? COLORS.warning : '#999999'}
             />
           </View>
+
+          {/* Export Data */}
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={handleExport}
+            disabled={exporting}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.infoIcon, { backgroundColor: `${COLORS.success}18` }]}>
+              <Ionicons name="download-outline" size={16} color={COLORS.success} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              Export Workout Data
+            </Text>
+            {exporting ? (
+              <InlineSpinner color={COLORS.success} size={16} />
+            ) : (
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* ── Logout ── */}

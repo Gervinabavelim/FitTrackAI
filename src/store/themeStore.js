@@ -16,7 +16,7 @@ const useThemeStore = create((set, get) => ({
         set({ loaded: true });
       }
     } catch (error) {
-      console.warn('Failed to load theme preference:', error);
+      // Failed to load theme, using default
       set({ loaded: true });
     }
   },
@@ -28,7 +28,7 @@ const useThemeStore = create((set, get) => ({
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.THEME, newPref);
     } catch (error) {
-      console.warn('Failed to persist theme:', error);
+      // Failed to persist theme
     }
   },
 
@@ -39,7 +39,7 @@ const useThemeStore = create((set, get) => ({
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.THEME, preference);
     } catch (error) {
-      console.warn('Failed to persist theme:', error);
+      // Failed to persist theme
     }
   },
 }));
