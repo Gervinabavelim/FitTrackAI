@@ -14,3 +14,6 @@ web-build/
 *.tsbuildinfo
 .env
 .env.*
+functions/.env
+google-service-account-key.json
+screenshots/

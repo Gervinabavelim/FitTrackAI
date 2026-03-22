@@ -55,8 +55,10 @@ Welcome to FitTrack AI! Your all-in-one fitness companion featuring:
 https://www.freeprivacypolicy.com/live/baa7f0ed-703b-4e7c-9447-ba07322cc201
 
 ## Support URL
-TODO: Add a support URL (can be your GitHub repo or a simple contact page)
-Suggestion: https://github.com/Gervinabavelim/FitTrackAI/issues
+https://github.com/Gervinabavelim/FitTrackAI/issues
+
+## Terms of Service URL
+https://www.freeprivacypolicy.com/live/baa7f0ed-703b-4e7c-9447-ba07322cc201
 
 ## Screenshots Needed
 

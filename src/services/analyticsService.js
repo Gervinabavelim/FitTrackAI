@@ -5,11 +5,13 @@
  */
 
 export function trackEvent(name, props = {}) {
-  // TODO: Replace with real analytics provider
-  // e.g., mixpanel.track(name, props);
+  if (__DEV__) {
+    console.log(`[Analytics] Event: ${name}`, props);
+  }
 }
 
 export function trackScreen(name) {
-  // TODO: Replace with real analytics provider
-  // e.g., mixpanel.screen(name);
+  if (__DEV__) {
+    console.log(`[Analytics] Screen: ${name}`);
+  }
 }
