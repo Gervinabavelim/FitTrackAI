@@ -21,6 +21,9 @@ import { AILoadingState } from '../../components/LoadingSpinner';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { checkAIRateLimit } from '../../utils/rateLimiter';
 import useNetworkStatus from '../../hooks/useNetworkStatus';
+import useSubscriptionStore from '../../store/subscriptionStore';
+import { ProLockOverlay } from '../../components/ProBadge';
+import { PRO_FEATURES } from '../../utils/proFeatures';
 import { trackEvent } from '../../services/analyticsService';
 
 const FITNESS_TIPS = [
@@ -238,12 +241,13 @@ const DayCard = ({ day, isDark, colors }) => {
 };
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
-const AIScreen = () => {
+const AIScreen = ({ navigation }) => {
   const { user, profile } = useAuthStore();
   const { recentWorkouts, fetchRecentWorkouts } = useWorkoutStore();
   const { isDark, colors } = useTheme();
   const haptics = useHaptics();
   const { showToast } = useToast();
+  const isPro = useSubscriptionStore((s) => s.isPro);
 
   const [plan, setPlan] = useState(null);
   const [generating, setGenerating] = useState(false);
@@ -351,6 +355,40 @@ const AIScreen = () => {
           </View>
         </View>
 
+        {/* Pro gate */}
+        {!isPro && (
+          <>
+            <ProLockOverlay
+              navigation={navigation}
+              feature={PRO_FEATURES.AI_COACH}
+              message="Get personalized 7-day workout plans tailored to your fitness level and goals with AI Coach."
+              colors={colors}
+              isDark={isDark}
+            />
+
+            {/* Fitness Tip for free users */}
+            <View style={styles.emptyState}>
+              <View
+                style={[
+                  styles.tipOfDay,
+                  {
+                    backgroundColor: `${COLORS.success}12`,
+                    borderColor: `${COLORS.success}30`,
+                  },
+                ]}
+              >
+                <Ionicons name="bulb-outline" size={16} color={COLORS.success} />
+                <Text style={[styles.tipOfDayText, { color: COLORS.success }]}>
+                  {todayTip}
+                </Text>
+              </View>
+            </View>
+            <View style={{ height: 100 }} />
+          </>
+        )}
+
+        {isPro && (
+        <>
         {/* Profile context pill */}
         {profile && (
           <View
@@ -640,6 +678,8 @@ const AIScreen = () => {
         )}
 
         <View style={{ height: 100 }} />
+        </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

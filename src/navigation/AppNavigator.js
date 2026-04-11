@@ -1,19 +1,37 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import useAuthStore from '../store/authStore';
+import useSubscriptionStore from '../store/subscriptionStore';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
+import PaywallScreen from '../screens/main/PaywallScreen';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import useTheme from '../hooks/useTheme';
 import { COLORS, ROUTES, STORAGE_KEYS } from '../utils/constants';
 import { addNotificationResponseListener, setupNotifications } from '../services/notificationService';
 import { trackScreen } from '../services/analyticsService';
 
+const RootStack = createNativeStackNavigator();
+
+// Wrap MainNavigator + Paywall modal in a stack
+const MainWithPaywall = () => (
+  <RootStack.Navigator screenOptions={{ headerShown: false }}>
+    <RootStack.Screen name="MainTabs" component={MainNavigator} />
+    <RootStack.Screen
+      name={ROUTES.PAYWALL}
+      component={PaywallScreen}
+      options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+    />
+  </RootStack.Navigator>
+);
+
 const AppNavigator = () => {
   const { user, profile, loading, initAuth } = useAuthStore();
+  const initSubscription = useSubscriptionStore((s) => s.initialize);
   const { isDark, colors } = useTheme();
   const navigationRef = useRef(null);
   const routeNameRef = useRef(null);
@@ -33,6 +51,13 @@ const AppNavigator = () => {
       setOnboardingDone(val === 'true');
     });
   }, []);
+
+  // Initialize subscription store when authenticated
+  useEffect(() => {
+    if (user?.uid) {
+      initSubscription(user.uid);
+    }
+  }, [user?.uid]);
 
   // Auto-setup notifications when authenticated
   useEffect(() => {
@@ -111,7 +136,7 @@ const AppNavigator = () => {
     >
       <StatusBar style={isDark ? 'light' : 'dark'} />
       {isAuthenticated && hasCompletedProfile ? (
-        <MainNavigator />
+        <MainWithPaywall />
       ) : isAuthenticated && !hasCompletedProfile ? (
         <AuthNavigator initialRoute={ROUTES.PROFILE_SETUP} />
       ) : (

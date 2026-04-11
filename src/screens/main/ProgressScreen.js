@@ -26,6 +26,9 @@ import {
 } from '../../utils/calculations';
 import { HeroStat } from '../../components/StatCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import useSubscriptionStore from '../../store/subscriptionStore';
+import { ProLockOverlay } from '../../components/ProBadge';
+import { PRO_FEATURES } from '../../utils/proFeatures';
 import { subDays, format } from 'date-fns';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -35,6 +38,7 @@ const ProgressScreen = ({ navigation }) => {
   const { user, profile } = useAuthStore();
   const { workouts, fetchWorkouts, loading } = useWorkoutStore();
   const { isDark, colors } = useTheme();
+  const isPro = useSubscriptionStore((s) => s.isPro);
 
   const [refreshing, setRefreshing] = useState(false);
   const [dailyCalories30, setDailyCalories30] = useState([]);
@@ -296,7 +300,18 @@ const ProgressScreen = ({ navigation }) => {
               </View>
             </View>
 
-            {chartDataReady && (
+            {/* Pro gate for full analytics */}
+            {!isPro && (
+              <ProLockOverlay
+                navigation={navigation}
+                feature={PRO_FEATURES.FULL_ANALYTICS}
+                message="Unlock 30-day calorie trends, weight tracking, volume charts, and personal bests with Pro."
+                colors={colors}
+                isDark={isDark}
+              />
+            )}
+
+            {isPro && chartDataReady && (
               <>
                 {/* ── Calories Burned Chart ── */}
                 <View style={styles.chartSection}>
@@ -422,7 +437,7 @@ const ProgressScreen = ({ navigation }) => {
             )}
 
             {/* ── Weekly Insight ── */}
-            {weeklyInsight && workouts.length > 0 && (
+            {isPro && weeklyInsight && workouts.length > 0 && (
               <View
                 style={[
                   styles.insightCard,
@@ -440,7 +455,7 @@ const ProgressScreen = ({ navigation }) => {
             )}
 
             {/* ── Personal Bests ── */}
-            {workouts.length > 0 && (personalBests.heaviestLifts.length > 0 || personalBests.longestDuration || personalBests.highestCalories) && (
+            {isPro && workouts.length > 0 && (personalBests.heaviestLifts.length > 0 || personalBests.longestDuration || personalBests.highestCalories) && (
               <View
                 style={[
                   styles.summaryCard,

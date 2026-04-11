@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Share,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -159,14 +160,25 @@ const DashboardScreen = ({ navigation }) => {
           </View>
           <TouchableOpacity
             onPress={() => navigation.navigate(ROUTES.PROFILE)}
-            style={[
-              styles.avatarBtn,
-              { backgroundColor: `${COLORS.primary}20` },
-            ]}
+            activeOpacity={0.8}
           >
-            <Text style={styles.avatarEmoji}>
-              {firstName.charAt(0).toUpperCase()}
-            </Text>
+            {profile?.photoUri ? (
+              <Image
+                source={{ uri: profile.photoUri }}
+                style={styles.avatarPhoto}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.avatarBtn,
+                  { backgroundColor: `${COLORS.primary}20` },
+                ]}
+              >
+                <Text style={styles.avatarEmoji}>
+                  {firstName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -410,6 +422,13 @@ const styles = StyleSheet.create({
   greeting: { fontSize: 14, fontWeight: '500' },
   userName: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 },
   motivational: { fontSize: 13, fontWeight: '500', marginTop: 3, fontStyle: 'italic' },
+  avatarPhoto: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
   avatarBtn: {
     width: 48,
     height: 48,

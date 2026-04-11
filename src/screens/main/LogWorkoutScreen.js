@@ -25,6 +25,8 @@ import { InlineSpinner } from '../../components/LoadingSpinner';
 import { sendImmediateNotification, sendStreakMilestoneNotification } from '../../services/notificationService';
 import { checkWorkoutLogRateLimit } from '../../utils/rateLimiter';
 import useNetworkStatus from '../../hooks/useNetworkStatus';
+import useSubscriptionStore from '../../store/subscriptionStore';
+import { canLogWorkout, FREE_DAILY_WORKOUT_LIMIT } from '../../utils/proFeatures';
 import { trackEvent } from '../../services/analyticsService';
 
 const LogWorkoutScreen = ({ navigation, route }) => {
@@ -34,6 +36,7 @@ const LogWorkoutScreen = ({ navigation, route }) => {
   const haptics = useHaptics();
   const { showToast } = useToast();
   const { isConnected } = useNetworkStatus();
+  const isPro = useSubscriptionStore((s) => s.isPro);
 
   const [exerciseName, setExerciseName] = useState('');
   const [sets, setSets] = useState('');
@@ -121,6 +124,19 @@ const LogWorkoutScreen = ({ navigation, route }) => {
 
   const handleSave = async () => {
     if (!validate()) return;
+
+    // Free-tier daily workout limit
+    if (!isPro) {
+      const { allowed, remaining } = canLogWorkout(recentWorkouts);
+      if (!allowed) {
+        showToast(
+          `Daily limit reached (${FREE_DAILY_WORKOUT_LIMIT}/day). Upgrade to Pro for unlimited workouts!`,
+          'warning'
+        );
+        navigation.navigate('Paywall', { feature: 'unlimited_workouts' });
+        return;
+      }
+    }
 
     if (!isConnected) {
       showToast("You're offline. Connect to the internet to save your workout.", 'warning');
@@ -227,6 +243,31 @@ const LogWorkoutScreen = ({ navigation, route }) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Free-tier limit banner */}
+          {!isPro && (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                backgroundColor: `${COLORS.warning}12`,
+                borderColor: `${COLORS.warning}30`,
+                borderWidth: 1,
+                borderRadius: 8,
+                padding: 12,
+                marginBottom: 16,
+              }}
+            >
+              <Ionicons name="information-circle" size={18} color={COLORS.warning} />
+              <Text style={{ flex: 1, fontSize: 13, color: COLORS.warning, fontWeight: '600' }}>
+                {canLogWorkout(recentWorkouts).remaining} of {FREE_DAILY_WORKOUT_LIMIT} free workouts remaining today
+              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Paywall', { feature: 'unlimited_workouts' })}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.primary }}>Upgrade</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Repeat Recent */}
           {recentExercises.length > 0 && (
             <View style={styles.fieldGroup}>

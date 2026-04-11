@@ -8,7 +8,11 @@ import {
   TextInput,
   Alert,
   Switch,
+  Image,
+  ActionSheetIOS,
+  Platform,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import useAuthStore from '../../store/authStore';
@@ -22,19 +26,101 @@ import { cancelAllNotifications, setupNotifications } from '../../services/notif
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { checkProfileUpdateRateLimit } from '../../utils/rateLimiter';
 import { exportWorkoutsCSV } from '../../utils/exportData';
+import useSubscriptionStore from '../../store/subscriptionStore';
+import { ProBadge } from '../../components/ProBadge';
+import { PRO_FEATURES } from '../../utils/proFeatures';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
   const { user, profile, updateProfile, logout, loading } = useAuthStore();
   const { workouts, streak, totalCalories, reset: resetWorkoutStore } = useWorkoutStore();
   const { isDark, colors, toggleTheme } = useTheme();
   const haptics = useHaptics();
   const { showToast } = useToast();
+  const { isPro, reset: resetSubscriptionStore } = useSubscriptionStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [errors, setErrors] = useState({});
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // ─── Profile Photo ─────────────────────────────────────────────────────────
+  const pickImage = async (useCamera = false) => {
+    try {
+      const permissionMethod = useCamera
+        ? ImagePicker.requestCameraPermissionsAsync
+        : ImagePicker.requestMediaLibraryPermissionsAsync;
+
+      const { status } = await permissionMethod();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          `Please allow access to your ${useCamera ? 'camera' : 'photo library'} in Settings.`
+        );
+        return;
+      }
+
+      const launchMethod = useCamera
+        ? ImagePicker.launchCameraAsync
+        : ImagePicker.launchImageLibraryAsync;
+
+      const result = await launchMethod({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setUploadingPhoto(true);
+        const photoUri = result.assets[0].uri;
+        const updateResult = await updateProfile({ photoUri });
+        if (updateResult.success) {
+          haptics.success();
+          showToast('Profile photo updated!', 'success');
+        } else {
+          showToast('Failed to update photo.', 'error');
+        }
+        setUploadingPhoto(false);
+      }
+    } catch (error) {
+      setUploadingPhoto(false);
+      showToast('Could not update photo.', 'error');
+    }
+  };
+
+  const handleAvatarPress = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Take Photo', 'Choose from Library', ...(profile?.photoUri ? ['Remove Photo'] : [])],
+          cancelButtonIndex: 0,
+          destructiveButtonIndex: profile?.photoUri ? 3 : undefined,
+        },
+        (index) => {
+          if (index === 1) pickImage(true);
+          else if (index === 2) pickImage(false);
+          else if (index === 3) removePhoto();
+        }
+      );
+    } else {
+      Alert.alert('Profile Photo', 'Choose an option', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Take Photo', onPress: () => pickImage(true) },
+        { text: 'Choose from Library', onPress: () => pickImage(false) },
+        ...(profile?.photoUri ? [{ text: 'Remove Photo', style: 'destructive', onPress: removePhoto }] : []),
+      ]);
+    }
+  };
+
+  const removePhoto = async () => {
+    const result = await updateProfile({ photoUri: null });
+    if (result.success) {
+      haptics.success();
+      showToast('Photo removed.', 'success');
+    }
+  };
 
   const bmiInfo = profile
     ? calculateBMI(profile.weightKg, profile.heightCm)
@@ -119,6 +205,10 @@ const ProfileScreen = () => {
 
   // ─── Export Data ─────────────────────────────────────────────────────────────
   const handleExport = async () => {
+    if (!isPro) {
+      navigation.navigate('Paywall', { feature: PRO_FEATURES.DATA_EXPORT });
+      return;
+    }
     if (workouts.length === 0) {
       showToast('No workouts to export yet.', 'warning');
       return;
@@ -146,6 +236,7 @@ const ProfileScreen = () => {
           style: 'destructive',
           onPress: async () => {
             resetWorkoutStore();
+            resetSubscriptionStore();
             await logout();
           },
         },
@@ -192,19 +283,38 @@ const ProfileScreen = () => {
 
         {/* ── Avatar + Name ── */}
         <View style={styles.avatarSection}>
-          <View
-            style={[
-              styles.avatar,
-              { backgroundColor: `${COLORS.primary}25` },
-            ]}
-          >
-            <Text style={styles.avatarText}>
-              {profile?.name?.charAt(0)?.toUpperCase() || '?'}
+          <TouchableOpacity onPress={handleAvatarPress} activeOpacity={0.8}>
+            {profile?.photoUri ? (
+              <Image
+                source={{ uri: profile.photoUri }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.avatar,
+                  { backgroundColor: `${COLORS.primary}25` },
+                ]}
+              >
+                <Text style={styles.avatarText}>
+                  {profile?.name?.charAt(0)?.toUpperCase() || '?'}
+                </Text>
+              </View>
+            )}
+            <View style={styles.cameraOverlay}>
+              {uploadingPhoto ? (
+                <InlineSpinner color="#FFF" size={14} />
+              ) : (
+                <Ionicons name="camera" size={14} color="#FFF" />
+              )}
+            </View>
+          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[styles.profileName, { color: colors.text }]}>
+              {profile?.name || 'Your Name'}
             </Text>
+            {isPro && <ProBadge size="medium" />}
           </View>
-          <Text style={[styles.profileName, { color: colors.text }]}>
-            {profile?.name || 'Your Name'}
-          </Text>
           <Text style={[styles.profileEmail, { color: colors.textMuted }]}>
             {user?.email}
           </Text>
@@ -478,6 +588,24 @@ const ProfileScreen = () => {
         >
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
 
+          {/* DEV: Pro Toggle — remove before production */}
+          {__DEV__ && (
+            <View style={styles.settingRow}>
+              <View style={[styles.infoIcon, { backgroundColor: `${COLORS.warning}18` }]}>
+                <Ionicons name="diamond" size={16} color={COLORS.warning} />
+              </View>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>
+                DEV: Pro Mode
+              </Text>
+              <Switch
+                value={isPro}
+                onValueChange={() => { haptics.selection(); useSubscriptionStore.getState().toggleProDev(); }}
+                trackColor={{ false: '#E0E0E0', true: `${COLORS.warning}60` }}
+                thumbColor={isPro ? COLORS.warning : '#999999'}
+              />
+            </View>
+          )}
+
           {/* Dark Mode Toggle */}
           <View style={styles.settingRow}>
             <View style={[styles.infoIcon, { backgroundColor: `${COLORS.primary}18` }]}>
@@ -523,11 +651,32 @@ const ProfileScreen = () => {
             <Text style={[styles.settingLabel, { color: colors.text }]}>
               Export Workout Data
             </Text>
+            {!isPro && <ProBadge />}
             {exporting ? (
               <InlineSpinner color={COLORS.success} size={16} />
             ) : (
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             )}
+          </TouchableOpacity>
+
+          {/* Upgrade / Manage Subscription */}
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => navigation.navigate('Paywall', { feature: 'profile' })}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.infoIcon, { backgroundColor: `${COLORS.warning}18` }]}>
+              <Ionicons name="diamond-outline" size={16} color={COLORS.warning} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {isPro ? 'Manage Subscription' : 'Upgrade to Pro'}
+            </Text>
+            {!isPro && (
+              <View style={{ backgroundColor: `${COLORS.primary}15`, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
+                <Text style={{ color: COLORS.primary, fontSize: 11, fontWeight: '700' }}>Unlock All</Text>
+              </View>
+            )}
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 
@@ -582,6 +731,32 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 3,
     borderColor: COLORS.primary,
+  },
+  avatarImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: COLORS.primary,
+    marginBottom: 12,
+  },
+  cameraOverlay: {
+    position: 'absolute',
+    bottom: 8,
+    right: -4,
+    backgroundColor: COLORS.primary,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
   },
   avatarText: { fontSize: 36, fontWeight: '800', color: COLORS.primary },
   profileName: { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },

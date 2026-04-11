@@ -207,6 +207,7 @@ export const ROUTES = {
   AI_SUGGESTIONS: 'AISuggestions',
   PROGRESS: 'Progress',
   PROFILE: 'Profile',
+  PAYWALL: 'Paywall',
 };
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
