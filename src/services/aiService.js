@@ -1,7 +1,95 @@
 import { chatCompletion, MAX_TOKENS } from '../config/openai';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { sanitizeText, sanitizeInt, sanitizeFloat, sanitizeEnum } from '../utils/sanitize';
 import { captureException } from '../config/sentry';
+
+/**
+ * Compute adaptation signals from a user's workout history.
+ * Called inline so prompts stay stateless.
+ */
+function computeTrainingContext(allWorkouts, streak) {
+  if (!Array.isArray(allWorkouts) || allWorkouts.length === 0) {
+    return {
+      streak: streak || 0,
+      last14Active: 0,
+      volumeThisWeekMin: 0,
+      volumeLastWeekMin: 0,
+      volumeTrend: 'no data',
+      topExercises: [],
+      underworkedSignal: null,
+      weightTrend: null,
+    };
+  }
+
+  const now = new Date();
+  const activeDays = new Set();
+  let thisWeekMin = 0;
+  let lastWeekMin = 0;
+  const exerciseCounts = new Map();
+  const bodyWeightSamples = [];
+
+  for (const w of allWorkouts) {
+    const date = w.date ? new Date(w.date) : null;
+    if (!date || isNaN(date)) continue;
+    const daysAgo = differenceInDays(now, date);
+    if (daysAgo >= 0 && daysAgo < 14) {
+      activeDays.add(format(date, 'yyyy-MM-dd'));
+    }
+    const duration = Number(w.duration) || 0;
+    if (daysAgo >= 0 && daysAgo < 7) thisWeekMin += duration;
+    else if (daysAgo >= 7 && daysAgo < 14) lastWeekMin += duration;
+
+    if (w.exerciseName) {
+      const n = (exerciseCounts.get(w.exerciseName) || 0) + 1;
+      exerciseCounts.set(w.exerciseName, n);
+    }
+    if (w.bodyWeight) {
+      bodyWeightSamples.push({ date, weight: Number(w.bodyWeight) });
+    }
+  }
+
+  let volumeTrend = 'stable';
+  if (lastWeekMin === 0 && thisWeekMin > 0) volumeTrend = 'ramping up from rest';
+  else if (thisWeekMin === 0 && lastWeekMin > 0) volumeTrend = 'dropped off this week';
+  else if (lastWeekMin > 0) {
+    const delta = (thisWeekMin - lastWeekMin) / lastWeekMin;
+    if (delta > 0.25) volumeTrend = 'increasing (+' + Math.round(delta * 100) + '%)';
+    else if (delta < -0.25) volumeTrend = 'decreasing (' + Math.round(delta * 100) + '%)';
+  }
+
+  const topExercises = [...exerciseCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name, count]) => `${name} (${count}x)`);
+
+  let weightTrend = null;
+  if (bodyWeightSamples.length >= 2) {
+    bodyWeightSamples.sort((a, b) => a.date - b.date);
+    const first = bodyWeightSamples[0];
+    const last = bodyWeightSamples[bodyWeightSamples.length - 1];
+    const deltaKg = Math.round((last.weight - first.weight) * 10) / 10;
+    const spanDays = Math.max(1, differenceInDays(last.date, first.date));
+    weightTrend = { deltaKg, spanDays };
+  }
+
+  let underworkedSignal = null;
+  if (activeDays.size < 3 && (streak || 0) === 0) {
+    underworkedSignal = 'low consistency — ease them back in with shorter or simpler sessions';
+  } else if (thisWeekMin > lastWeekMin * 1.6 && lastWeekMin > 0) {
+    underworkedSignal = 'sharp volume spike — watch for overtraining, include a deload or lower-intensity day';
+  }
+
+  return {
+    streak: streak || 0,
+    last14Active: activeDays.size,
+    volumeThisWeekMin: thisWeekMin,
+    volumeLastWeekMin: lastWeekMin,
+    volumeTrend,
+    topExercises,
+    underworkedSignal,
+    weightTrend,
+  };
+}
 
 /**
  * Generate a personalized 7-day workout plan using OpenAI gpt-4o-mini
@@ -10,7 +98,9 @@ import { captureException } from '../config/sentry';
  * @param {Array} recentWorkouts - Last 10 workouts from Firestore
  * @returns {Promise<Object>} Parsed workout plan with days array
  */
-export async function generateWorkoutPlan(userProfile, recentWorkouts = []) {
+export async function generateWorkoutPlan(userProfile, recentWorkouts = [], extras = {}) {
+  const { allWorkouts = recentWorkouts, streak = 0 } = extras;
+  const ctx = computeTrainingContext(allWorkouts, streak);
   // Sanitize user data before embedding in prompts
   const name = sanitizeText(userProfile.name, { maxLength: 100 }) || 'User';
   const age = sanitizeInt(userProfile.age, { min: 13, max: 120 });
@@ -101,11 +191,22 @@ TRAINING PREFERENCES:
 - Target Frequency: ${workoutDaysPerWeek} workout day(s) per week
 - Session Length: ~${sessionDurationMin} minutes per session
 
+CURRENT TRAINING CONTEXT:
+- Current streak: ${ctx.streak} day(s)
+- Active days in last 14: ${ctx.last14Active} / 14
+- Volume this week: ${ctx.volumeThisWeekMin} min (last week: ${ctx.volumeLastWeekMin} min — ${ctx.volumeTrend})
+${ctx.topExercises.length ? `- Most-trained lately: ${ctx.topExercises.join(', ')}` : ''}
+${ctx.weightTrend ? `- Body weight change over ${ctx.weightTrend.spanDays} day(s): ${ctx.weightTrend.deltaKg > 0 ? '+' : ''}${ctx.weightTrend.deltaKg} kg` : ''}
+${ctx.underworkedSignal ? `- ⚠ Coaching flag: ${ctx.underworkedSignal}` : ''}
+
 RECENT WORKOUT HISTORY (last 10 workouts):
 ${recentWorkoutsSummary}
 
 INSTRUCTIONS:
 Create an optimal 7-day plan tailored to this user.
+- Use the TRAINING CONTEXT above to adapt intensity: if volume is decreasing or last_14_active < 4, scale back and rebuild consistency; if volume is sharply increasing, include a lighter day to manage fatigue
+- Vary the stimulus — if the user has been repeating the same top exercises, introduce complementary movements that target underworked patterns (e.g. if bench-heavy, add rows; if squat-heavy, add posterior-chain work)
+- If a weight trend is shown, acknowledge progress toward their target in the planDescription or progressionNote
 - Respect the equipment available at their training location — do NOT prescribe gym-only exercises for home/outdoor users
 - Schedule exactly ${workoutDaysPerWeek} training day(s); the rest should be rest or active recovery days
 - Keep each session's total duration close to ${sessionDurationMin} minutes (warmup + exercises + cooldown)

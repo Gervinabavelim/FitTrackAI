@@ -243,7 +243,7 @@ const DayCard = ({ day, isDark, colors }) => {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 const AIScreen = ({ navigation }) => {
   const { user, profile } = useAuthStore();
-  const { recentWorkouts, fetchRecentWorkouts } = useWorkoutStore();
+  const { recentWorkouts, fetchRecentWorkouts, workouts, streak } = useWorkoutStore();
   const { isDark, colors } = useTheme();
   const haptics = useHaptics();
   const { showToast } = useToast();
@@ -305,7 +305,10 @@ const AIScreen = ({ navigation }) => {
     setPlanSaved(false);
 
     try {
-      const generatedPlan = await generateWorkoutPlan(profile, recentWorkouts);
+      const generatedPlan = await generateWorkoutPlan(profile, recentWorkouts, {
+        allWorkouts: workouts,
+        streak,
+      });
       setPlan(generatedPlan);
       setCooldownSeconds(30);
       trackEvent('ai_plan_generated', { goal: profile.fitnessGoal });
@@ -324,6 +327,7 @@ const AIScreen = ({ navigation }) => {
       await saveAIWorkoutPlan(user.uid, plan);
       setPlanSaved(true);
       haptics.success();
+      trackEvent('ai_plan_saved', { goal: profile?.fitnessGoal });
       showToast('Workout plan saved!', 'success');
       getSavedPlans(user.uid).then((plans) => setSavedPlans(plans.slice(0, 3))).catch(() => {});
     } catch (error) {

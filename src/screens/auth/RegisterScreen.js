@@ -19,6 +19,7 @@ import useTheme from '../../hooks/useTheme';
 import { COLORS, ROUTES } from '../../utils/constants';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { checkAuthRateLimit } from '../../utils/rateLimiter';
+import { trackEvent } from '../../services/analyticsService';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -196,8 +197,13 @@ const RegisterScreen = ({ navigation }) => {
     const rateCheck = checkAuthRateLimit();
     if (!rateCheck.allowed) { setFieldErrors({ email: rateCheck.message }); shake(); return; }
     const result = await register(email.trim().toLowerCase(), password);
-    if (result.success) navigation.navigate(ROUTES.PROFILE_SETUP);
-    else shake();
+    if (result.success) {
+      trackEvent('signup_success');
+      navigation.navigate(ROUTES.PROFILE_SETUP);
+    } else {
+      trackEvent('signup_failed');
+      shake();
+    }
   };
 
   return (

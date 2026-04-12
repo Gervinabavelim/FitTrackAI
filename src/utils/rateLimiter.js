@@ -86,6 +86,7 @@ const rateLimiter = new RateLimiter();
  * AI plan generation: max 5 per hour, 30s cooldown between requests
  */
 export function checkAIRateLimit() {
+  if (__DEV__) return { allowed: true, retryAfterMs: 0, message: '' };
   return rateLimiter.check('ai_generate', {
     maxAttempts: 5,
     windowMs: 60 * 60 * 1000,  // 1 hour

@@ -25,6 +25,7 @@ import {
 import { calculateBMI } from '../../utils/calculations';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { setupNotifications } from '../../services/notificationService';
+import { trackEvent, identify } from '../../services/analyticsService';
 
 const TOTAL_STEPS = 4;
 
@@ -117,6 +118,13 @@ const ProfileSetupScreen = ({ navigation }) => {
     }
     const result = await saveProfile(profileData);
     if (result.success) {
+      identify({ fitnessGoal, fitnessLevel, workoutLocation });
+      trackEvent('profile_completed', {
+        goal: fitnessGoal,
+        level: fitnessLevel,
+        location: workoutLocation,
+        daysPerWeek: workoutDaysPerWeek,
+      });
       await setupNotifications(name.trim().split(' ')[0]);
     } else {
       setErrors({ submit: result.error || 'Failed to save profile. Please try again.' });
