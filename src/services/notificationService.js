@@ -15,58 +15,52 @@ Notifications.setNotificationHandler({
 
 // ─── Request Permissions ──────────────────────────────────────────────────────
 /**
- * Request push notification permissions and return the Expo push token
- * @returns {Promise<string|null>} Expo push token or null if permission denied
+ * Ensure notification permission is granted. Sets up Android channels and
+ * persists the enabled flag. Returns whether local notifications can fire.
+ * Push token acquisition is a separate, optional concern (remote push only).
  */
-export async function registerForPushNotifications() {
-  if (!Device.isDevice) {
-    // Push notifications require a physical device
-    return null;
-  }
-
-  // Check existing permissions
+export async function ensureNotificationPermission() {
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
-
-  // Request if not already granted
   if (existingStatus !== 'granted') {
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
   }
+  if (finalStatus !== 'granted') return false;
 
-  if (finalStatus !== 'granted') {
-    // Permission denied
-    return null;
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('fittrack-default', {
+      name: 'FitTrack Reminders',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#6366F1',
+      sound: 'default',
+    });
+    await Notifications.setNotificationChannelAsync('fittrack-progress', {
+      name: 'FitTrack Progress Updates',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      lightColor: '#10B981',
+    });
   }
 
-  // Get Expo push token
+  await AsyncStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, 'true');
+  return true;
+}
+
+/**
+ * Get an Expo push token for remote push. Requires a physical device.
+ * Safe to call after permission is granted; returns null on simulator or error.
+ */
+export async function registerForPushNotifications() {
+  if (!Device.isDevice) return null;
+  const granted = await ensureNotificationPermission();
+  if (!granted) return null;
   try {
     const { data: token } = await Notifications.getExpoPushTokenAsync({
       projectId: 'f9dd5026-b73f-4f2e-aa49-19382c7f5d1a',
     });
-
-    // Android channel setup
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('fittrack-default', {
-        name: 'FitTrack Reminders',
-        importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#6366F1',
-        sound: 'default',
-      });
-
-      await Notifications.setNotificationChannelAsync('fittrack-progress', {
-        name: 'FitTrack Progress Updates',
-        importance: Notifications.AndroidImportance.DEFAULT,
-        lightColor: '#10B981',
-      });
-    }
-
-    // Persist notifications enabled flag
-    await AsyncStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, 'true');
     return token;
-  } catch (error) {
-    // Failed to get push token
+  } catch {
     return null;
   }
 }
@@ -159,6 +153,43 @@ export async function cancelWeeklyProgressNotification() {
   }
 }
 
+// ─── Streak-Saver Evening Reminder ────────────────────────────────────────────
+/**
+ * 7:00 PM daily nudge aimed at protecting the user's streak. Fires every day;
+ * users who already worked out that day will see it as a win-reinforcement.
+ */
+export async function scheduleStreakSaverReminder(userName = 'Champ') {
+  await cancelStreakSaverReminder();
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `🔥 Don't break your streak, ${userName}!`,
+      body: "Still have time today — log a quick session and keep the fire going.",
+      sound: 'default',
+      data: { type: 'streak_saver', screen: 'LogWorkout' },
+    },
+    trigger: {
+      hour: 19,
+      minute: 0,
+      repeats: true,
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+    },
+  });
+  await AsyncStorage.setItem('@fittrack_streak_notif_id', identifier);
+  return identifier;
+}
+
+export async function cancelStreakSaverReminder() {
+  try {
+    const existingId = await AsyncStorage.getItem('@fittrack_streak_notif_id');
+    if (existingId) {
+      await Notifications.cancelScheduledNotificationAsync(existingId);
+      await AsyncStorage.removeItem('@fittrack_streak_notif_id');
+    }
+  } catch {
+    // Silently fail on cancel
+  }
+}
+
 // ─── Send Immediate Notification ──────────────────────────────────────────────
 /**
  * Send an immediate local notification (e.g., after logging a workout)
@@ -217,11 +248,15 @@ export async function cancelAllNotifications() {
  */
 export async function setupNotifications(userName) {
   try {
-    const token = await registerForPushNotifications();
-    if (!token) return false;
+    const granted = await ensureNotificationPermission();
+    if (!granted) return false;
 
     await scheduleDailyWorkoutReminder(userName);
+    await scheduleStreakSaverReminder(userName);
     await scheduleWeeklyProgressNotification(userName);
+
+    // Remote push token is best-effort — local schedules above don't depend on it.
+    registerForPushNotifications().catch(() => {});
 
     return true;
   } catch (error) {
