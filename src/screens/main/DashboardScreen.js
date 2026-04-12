@@ -21,6 +21,7 @@ import { formatDuration } from '../../utils/calculations';
 import WorkoutCard from '../../components/WorkoutCard';
 import StatCard from '../../components/StatCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import EmptyState from '../../components/EmptyState';
 import useNetworkStatus from '../../hooks/useNetworkStatus';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -341,25 +342,13 @@ const DashboardScreen = ({ navigation }) => {
               />
             ))
           ) : (
-            <TouchableOpacity
-              onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
-              style={[
-                styles.emptyTodayCard,
-                {
-                  backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-                  borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
-                },
-              ]}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="barbell-outline" size={36} color={colors.textMuted} />
-              <Text style={[styles.emptyTodayTitle, { color: colors.text }]}>
-                No workout logged today
-              </Text>
-              <Text style={[styles.emptyTodaySubtext, { color: colors.textMuted }]}>
-                Tap here to log your first workout of the day
-              </Text>
-            </TouchableOpacity>
+            <EmptyState
+              icon="barbell-outline"
+              title="No workout logged today"
+              subtitle="Tap below to log your first session of the day."
+              ctaLabel="Log a Workout"
+              onCtaPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
+            />
           )}
         </View>
 

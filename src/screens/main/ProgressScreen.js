@@ -25,7 +25,7 @@ import {
   formatDuration,
 } from '../../utils/calculations';
 import { HeroStat } from '../../components/StatCard';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import Skeleton, { SkeletonStatRow, SkeletonCard } from '../../components/Skeleton';
 import useSubscriptionStore from '../../store/subscriptionStore';
 import { ProLockOverlay } from '../../components/ProBadge';
 import { PRO_FEATURES } from '../../utils/proFeatures';
@@ -195,11 +195,14 @@ const ProgressScreen = ({ navigation }) => {
         </View>
 
         {loading && !refreshing ? (
-          <LoadingSpinner
-            size="large"
-            message="Loading your progress..."
-            fullScreen
-          />
+          <View style={{ paddingTop: 8 }}>
+            <SkeletonStatRow />
+            <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+              <Skeleton width="40%" height={14} />
+              <SkeletonCard height={180} />
+              <SkeletonCard height={140} />
+            </View>
+          </View>
         ) : (
           <>
             {/* ── Hero Stats ── */}
