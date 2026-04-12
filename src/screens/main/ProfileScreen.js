@@ -678,6 +678,21 @@ const ProfileScreen = ({ navigation }) => {
             )}
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </TouchableOpacity>
+
+          {/* Contact Us */}
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => { haptics.light(); navigation.navigate('Contact'); }}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.infoIcon, { backgroundColor: `${COLORS.info}18` }]}>
+              <Ionicons name="chatbubbles-outline" size={16} color={COLORS.info} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              Contact Us
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
         </View>
 
         {/* ── Logout ── */}

@@ -208,6 +208,7 @@ export const ROUTES = {
   PROGRESS: 'Progress',
   PROFILE: 'Profile',
   PAYWALL: 'Paywall',
+  CONTACT: 'Contact',
 };
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
