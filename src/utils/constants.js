@@ -14,6 +14,22 @@ export const FITNESS_GOALS = [
   { label: 'Increase Flexibility', value: 'increase_flexibility', icon: 'body-outline', description: 'Improve range of motion' },
 ];
 
+export const FITNESS_GOAL_VALUES = FITNESS_GOALS.map((g) => g.value);
+export const FITNESS_LEVEL_VALUES = FITNESS_LEVELS.map((l) => l.value);
+
+// ─── Workout Preferences ──────────────────────────────────────────────────────
+export const WORKOUT_LOCATIONS = [
+  { label: 'Home', value: 'home', icon: 'home-outline', description: 'Bodyweight, dumbbells, bands' },
+  { label: 'Gym', value: 'gym', icon: 'barbell-outline', description: 'Full equipment access' },
+  { label: 'Both', value: 'both', icon: 'swap-horizontal-outline', description: 'Mix of home and gym' },
+  { label: 'Outdoor', value: 'outdoor', icon: 'sunny-outline', description: 'Running, calisthenics, parks' },
+];
+
+export const WORKOUT_LOCATION_VALUES = WORKOUT_LOCATIONS.map((l) => l.value);
+
+export const SESSION_DURATIONS = [15, 30, 45, 60, 90];
+export const WORKOUT_FREQUENCIES = [1, 2, 3, 4, 5, 6, 7];
+
 // ─── Exercise Categories ───────────────────────────────────────────────────────
 export const EXERCISE_CATEGORIES = {
   strength: {

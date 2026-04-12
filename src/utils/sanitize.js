@@ -125,16 +125,32 @@ export function sanitizeWorkoutData(data) {
  * Sanitize profile data before sending to Firestore.
  */
 export function sanitizeProfileData(data) {
-  return {
+  const out = {
     name: sanitizeName(data.name),
     age: sanitizeInt(data.age, { min: 13, max: 120 }),
     heightCm: sanitizeFloat(data.heightCm, { min: 50, max: 300 }),
     weightKg: sanitizeFloat(data.weightKg, { min: 10, max: 500 }),
     fitnessLevel: sanitizeEnum(data.fitnessLevel, ['beginner', 'intermediate', 'advanced', 'athlete']),
     fitnessGoal: sanitizeEnum(data.fitnessGoal, [
-      'weight_loss', 'muscle_gain', 'endurance', 'flexibility', 'general_fitness', 'strength',
+      'lose_weight', 'build_muscle', 'maintain_fitness', 'improve_endurance', 'increase_flexibility',
     ]),
   };
+  if (data.targetWeightKg != null && data.targetWeightKg !== '') {
+    out.targetWeightKg = sanitizeFloat(data.targetWeightKg, { min: 10, max: 500 });
+  }
+  if (data.workoutDaysPerWeek != null && data.workoutDaysPerWeek !== '') {
+    out.workoutDaysPerWeek = sanitizeInt(data.workoutDaysPerWeek, { min: 1, max: 7 });
+  }
+  if (data.workoutLocation) {
+    out.workoutLocation = sanitizeEnum(data.workoutLocation, ['home', 'gym', 'both', 'outdoor']);
+  }
+  if (data.sessionDurationMin != null && data.sessionDurationMin !== '') {
+    out.sessionDurationMin = sanitizeInt(data.sessionDurationMin, { min: 10, max: 240 });
+  }
+  Object.keys(out).forEach((k) => {
+    if (out[k] === null || out[k] === undefined || out[k] === '') delete out[k];
+  });
+  return out;
 }
 
 // ─── Enum / Allowlist Sanitization ───────────────────────────────────────────

@@ -23,9 +23,32 @@ export async function generateWorkoutPlan(userProfile, recentWorkouts = []) {
   );
   const fitnessGoal = sanitizeEnum(
     userProfile.fitnessGoal,
-    ['weight_loss', 'muscle_gain', 'endurance', 'flexibility', 'general_fitness', 'strength'],
-    'general_fitness'
+    ['lose_weight', 'build_muscle', 'maintain_fitness', 'improve_endurance', 'increase_flexibility'],
+    'maintain_fitness'
   );
+  const targetWeightKg = sanitizeFloat(userProfile.targetWeightKg, { min: 10, max: 500 });
+  const workoutDaysPerWeek = sanitizeInt(userProfile.workoutDaysPerWeek, { min: 1, max: 7 }) || 3;
+  const workoutLocation = sanitizeEnum(
+    userProfile.workoutLocation,
+    ['home', 'gym', 'both', 'outdoor'],
+    'gym'
+  );
+  const sessionDurationMin = sanitizeInt(userProfile.sessionDurationMin, { min: 10, max: 240 }) || 45;
+
+  const equipmentByLocation = {
+    home: 'Limited: bodyweight, dumbbells, resistance bands. Avoid barbells and heavy machines.',
+    gym: 'Full gym equipment: barbells, dumbbells, machines, cables, racks.',
+    both: 'Mixed: some sessions home (bodyweight/dumbbells), some gym (full equipment).',
+    outdoor: 'Outdoor only: bodyweight, running, calisthenics, park equipment. No gym machines.',
+  };
+
+  let weightDelta = '';
+  if (targetWeightKg && weightKg) {
+    const diff = Math.round((targetWeightKg - weightKg) * 10) / 10;
+    if (diff !== 0) {
+      weightDelta = ` (target: ${targetWeightKg} kg, ${diff > 0 ? '+' : ''}${diff} kg from current)`;
+    }
+  }
 
   // Format recent workouts for the prompt
   const recentWorkoutsSummary =
@@ -68,23 +91,31 @@ USER PROFILE:
 - Name: ${name || 'User'}
 - Age: ${age || 'Unknown'} years
 - Height: ${heightCm || 'Unknown'} cm
-- Weight: ${weightKg || 'Unknown'} kg
+- Weight: ${weightKg || 'Unknown'} kg${weightDelta}
 ${bmi ? `- BMI: ${bmi}` : ''}
 - Fitness Level: ${fitnessLevel || 'Beginner'}
-- Primary Goal: ${fitnessGoal?.replace(/_/g, ' ') || 'General Fitness'}
+- Primary Goal: ${fitnessGoal?.replace(/_/g, ' ') || 'Maintain Fitness'}
+
+TRAINING PREFERENCES:
+- Training Location: ${workoutLocation} — ${equipmentByLocation[workoutLocation]}
+- Target Frequency: ${workoutDaysPerWeek} workout day(s) per week
+- Session Length: ~${sessionDurationMin} minutes per session
 
 RECENT WORKOUT HISTORY (last 10 workouts):
 ${recentWorkoutsSummary}
 
 INSTRUCTIONS:
-Based on this user's profile and recent activity patterns, create an optimal 7-day workout plan.
+Create an optimal 7-day plan tailored to this user.
+- Respect the equipment available at their training location — do NOT prescribe gym-only exercises for home/outdoor users
+- Schedule exactly ${workoutDaysPerWeek} training day(s); the rest should be rest or active recovery days
+- Keep each session's total duration close to ${sessionDurationMin} minutes (warmup + exercises + cooldown)
 - Account for their fitness level when prescribing sets, reps, and weights
 - Build on exercises they've been doing while adding progressive overload
-- Include 1-2 rest days strategically placed
-- If goal is weight loss: include more cardio and HIIT
-- If goal is muscle building: focus on compound lifts with progressive overload
-- If goal is endurance: cardio-heavy with varied intensities
-- Ensure each workout has a clear focus (e.g., Upper Body, Lower Body, Core, Cardio)
+- If goal is lose_weight: include more cardio and HIIT${targetWeightKg ? `; their target weight is ${targetWeightKg} kg` : ''}
+- If goal is build_muscle: focus on compound lifts with progressive overload${targetWeightKg ? `; their target weight is ${targetWeightKg} kg` : ''}
+- If goal is improve_endurance: cardio-heavy with varied intensities
+- If goal is increase_flexibility: include yoga/mobility-focused sessions
+- Ensure each workout has a clear focus (e.g., Upper Body, Lower Body, Core, Cardio, Mobility)
 
 Respond with this EXACT JSON structure:
 {
@@ -157,6 +188,8 @@ Respond with this EXACT JSON structure:
       userId: userProfile.uid,
       userGoal: fitnessGoal,
       userLevel: fitnessLevel,
+      userLocation: workoutLocation,
+      userFrequency: workoutDaysPerWeek,
     };
   } catch (error) {
     if (error instanceof SyntaxError) {

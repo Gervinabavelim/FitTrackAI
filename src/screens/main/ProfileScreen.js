@@ -20,7 +20,14 @@ import useWorkoutStore from '../../store/workoutStore';
 import useTheme from '../../hooks/useTheme';
 import useHaptics from '../../hooks/useHaptics';
 import { useToast } from '../../contexts/ToastContext';
-import { COLORS, FITNESS_LEVELS, FITNESS_GOALS } from '../../utils/constants';
+import {
+  COLORS,
+  FITNESS_LEVELS,
+  FITNESS_GOALS,
+  WORKOUT_LOCATIONS,
+  WORKOUT_FREQUENCIES,
+  SESSION_DURATIONS,
+} from '../../utils/constants';
 import { calculateBMI, idealWeightRange } from '../../utils/calculations';
 import { cancelAllNotifications, setupNotifications } from '../../services/notificationService';
 import { InlineSpinner } from '../../components/LoadingSpinner';
@@ -139,6 +146,10 @@ const ProfileScreen = ({ navigation }) => {
       weightKg: String(profile?.weightKg || ''),
       fitnessLevel: profile?.fitnessLevel || '',
       fitnessGoal: profile?.fitnessGoal || '',
+      targetWeightKg: profile?.targetWeightKg ? String(profile.targetWeightKg) : '',
+      workoutDaysPerWeek: profile?.workoutDaysPerWeek || 3,
+      workoutLocation: profile?.workoutLocation || '',
+      sessionDurationMin: profile?.sessionDurationMin || 45,
     });
     setErrors({});
     setIsEditing(true);
@@ -162,6 +173,10 @@ const ProfileScreen = ({ navigation }) => {
     const w = parseFloat(editData.weightKg);
     if (!editData.weightKg || isNaN(w) || w < 30 || w > 300)
       errs.weightKg = 'Enter valid weight (30–300 kg)';
+    if (editData.targetWeightKg) {
+      const t = parseFloat(editData.targetWeightKg);
+      if (isNaN(t) || t < 30 || t > 300) errs.targetWeightKg = 'Enter valid weight (30–300 kg)';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -175,14 +190,22 @@ const ProfileScreen = ({ navigation }) => {
       return;
     }
 
-    const result = await updateProfile({
+    const wantsTarget = editData.fitnessGoal === 'lose_weight' || editData.fitnessGoal === 'build_muscle';
+    const payload = {
       name: editData.name.trim(),
       age: parseInt(editData.age),
       heightCm: parseFloat(editData.heightCm),
       weightKg: parseFloat(editData.weightKg),
       fitnessLevel: editData.fitnessLevel || profile?.fitnessLevel,
       fitnessGoal: editData.fitnessGoal || profile?.fitnessGoal,
-    });
+      workoutDaysPerWeek: editData.workoutDaysPerWeek || 3,
+      sessionDurationMin: editData.sessionDurationMin || 45,
+    };
+    if (editData.workoutLocation) payload.workoutLocation = editData.workoutLocation;
+    if (wantsTarget && editData.targetWeightKg) {
+      payload.targetWeightKg = parseFloat(editData.targetWeightKg);
+    }
+    const result = await updateProfile(payload);
     if (result.success) {
       haptics.success();
       showToast('Profile updated!', 'success');
@@ -445,6 +468,97 @@ const ProfileScreen = ({ navigation }) => {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* Training Location */}
+            <Text style={[styles.editLabel, { color: colors.textSecondary, marginTop: 12, marginBottom: 8 }]}>
+              Training Location
+            </Text>
+            <View style={styles.selectorRow}>
+              {WORKOUT_LOCATIONS.map((loc) => (
+                <TouchableOpacity
+                  key={loc.value}
+                  onPress={() => setEditData((d) => ({ ...d, workoutLocation: loc.value }))}
+                  style={[
+                    styles.selectorChip,
+                    {
+                      backgroundColor: editData.workoutLocation === loc.value ? COLORS.primary : `${COLORS.primary}12`,
+                      borderColor: editData.workoutLocation === loc.value ? COLORS.primary : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text style={{ color: editData.workoutLocation === loc.value ? '#FFF' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
+                    {loc.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Days per week */}
+            <Text style={[styles.editLabel, { color: colors.textSecondary, marginTop: 12, marginBottom: 8 }]}>
+              Days per week
+            </Text>
+            <View style={styles.selectorRow}>
+              {WORKOUT_FREQUENCIES.map((d) => (
+                <TouchableOpacity
+                  key={d}
+                  onPress={() => setEditData((ed) => ({ ...ed, workoutDaysPerWeek: d }))}
+                  style={[
+                    styles.selectorChip,
+                    {
+                      backgroundColor: editData.workoutDaysPerWeek === d ? COLORS.primary : `${COLORS.primary}12`,
+                      borderColor: editData.workoutDaysPerWeek === d ? COLORS.primary : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text style={{ color: editData.workoutDaysPerWeek === d ? '#FFF' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
+                    {d}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Session length */}
+            <Text style={[styles.editLabel, { color: colors.textSecondary, marginTop: 12, marginBottom: 8 }]}>
+              Session length
+            </Text>
+            <View style={styles.selectorRow}>
+              {SESSION_DURATIONS.map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  onPress={() => setEditData((ed) => ({ ...ed, sessionDurationMin: m }))}
+                  style={[
+                    styles.selectorChip,
+                    {
+                      backgroundColor: editData.sessionDurationMin === m ? COLORS.primary : `${COLORS.primary}12`,
+                      borderColor: editData.sessionDurationMin === m ? COLORS.primary : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text style={{ color: editData.sessionDurationMin === m ? '#FFF' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
+                    {m} min
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Target weight (only for lose/build goals) */}
+            {(editData.fitnessGoal === 'lose_weight' || editData.fitnessGoal === 'build_muscle') && (
+              <View style={{ marginTop: 12 }}>
+                <Text style={[styles.editLabel, { color: colors.textSecondary, marginBottom: 8 }]}>
+                  Target weight (kg)
+                </Text>
+                <TextInput
+                  value={editData.targetWeightKg}
+                  onChangeText={(t) => setEditData((ed) => ({ ...ed, targetWeightKg: t.replace(/[^0-9.]/g, '') }))}
+                  placeholder="Optional"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="decimal-pad"
+                  style={inputStyle('targetWeightKg')}
+                  maxLength={6}
+                />
+                {errors.targetWeightKg && <Text style={styles.fieldError}>{errors.targetWeightKg}</Text>}
+              </View>
+            )}
 
             {/* Save / Cancel */}
             <View style={styles.editActions}>

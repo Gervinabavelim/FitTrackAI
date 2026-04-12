@@ -14,12 +14,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import useAuthStore from '../../store/authStore';
 import useTheme from '../../hooks/useTheme';
-import { COLORS, FITNESS_LEVELS, FITNESS_GOALS } from '../../utils/constants';
+import {
+  COLORS,
+  FITNESS_LEVELS,
+  FITNESS_GOALS,
+  WORKOUT_LOCATIONS,
+  WORKOUT_FREQUENCIES,
+  SESSION_DURATIONS,
+} from '../../utils/constants';
 import { calculateBMI } from '../../utils/calculations';
 import { InlineSpinner } from '../../components/LoadingSpinner';
 import { setupNotifications } from '../../services/notificationService';
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 const ProfileSetupScreen = ({ navigation }) => {
   const { saveProfile, loading, user } = useAuthStore();
@@ -35,6 +42,12 @@ const ProfileSetupScreen = ({ navigation }) => {
   const [weightKg, setWeightKg] = useState('');
   const [fitnessLevel, setFitnessLevel] = useState('');
   const [fitnessGoal, setFitnessGoal] = useState('');
+  const [targetWeightKg, setTargetWeightKg] = useState('');
+  const [workoutDaysPerWeek, setWorkoutDaysPerWeek] = useState(3);
+  const [workoutLocation, setWorkoutLocation] = useState('');
+  const [sessionDurationMin, setSessionDurationMin] = useState(45);
+
+  const wantsTargetWeight = fitnessGoal === 'lose_weight' || fitnessGoal === 'build_muscle';
 
   const bmiInfo = heightCm && weightKg ? calculateBMI(parseFloat(weightKg), parseFloat(heightCm)) : null;
 
@@ -58,6 +71,13 @@ const ProfileSetupScreen = ({ navigation }) => {
       if (!fitnessLevel) newErrors.fitnessLevel = 'Please select your fitness level';
       if (!fitnessGoal) newErrors.fitnessGoal = 'Please select your goal';
     }
+    if (currentStep === 4) {
+      if (!workoutLocation) newErrors.workoutLocation = 'Select where you train';
+      if (wantsTargetWeight && targetWeightKg) {
+        const t = parseFloat(targetWeightKg);
+        if (isNaN(t) || t < 30 || t > 300) newErrors.targetWeightKg = 'Enter a valid weight (30–300 kg)';
+      }
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -80,8 +100,21 @@ const ProfileSetupScreen = ({ navigation }) => {
   };
 
   const handleSave = async () => {
-    if (!validateStep(3)) return;
-    const profileData = { name: name.trim(), age: parseInt(age), heightCm: parseFloat(heightCm), weightKg: parseFloat(weightKg), fitnessLevel, fitnessGoal };
+    if (!validateStep(4)) return;
+    const profileData = {
+      name: name.trim(),
+      age: parseInt(age),
+      heightCm: parseFloat(heightCm),
+      weightKg: parseFloat(weightKg),
+      fitnessLevel,
+      fitnessGoal,
+      workoutDaysPerWeek,
+      workoutLocation,
+      sessionDurationMin,
+    };
+    if (wantsTargetWeight && targetWeightKg) {
+      profileData.targetWeightKg = parseFloat(targetWeightKg);
+    }
     const result = await saveProfile(profileData);
     if (result.success) {
       await setupNotifications(name.trim().split(' ')[0]);
@@ -192,6 +225,84 @@ const ProfileSetupScreen = ({ navigation }) => {
         })}
       </View>
 
+    </View>
+  );
+
+  const renderStep4 = () => (
+    <View>
+      <Text style={[styles.stepTitle, { color: colors.text }]}>Training Preferences</Text>
+      <Text style={[styles.stepSubtitle, { color: colors.textSecondary }]}>Helps your AI coach build the right plan</Text>
+
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Where do you train?</Text>
+      {errors.workoutLocation && <Text style={styles.fieldError}>{errors.workoutLocation}</Text>}
+      <View style={styles.goalsGrid}>
+        {WORKOUT_LOCATIONS.map((loc) => {
+          const isSelected = workoutLocation === loc.value;
+          return (
+            <TouchableOpacity
+              key={loc.value}
+              onPress={() => { setWorkoutLocation(loc.value); if (errors.workoutLocation) setErrors((e) => ({ ...e, workoutLocation: null })); }}
+              style={[styles.goalCard, { backgroundColor: isSelected ? `${COLORS.primary}18` : (isDark ? COLORS.dark.card : COLORS.light.card), borderColor: isSelected ? COLORS.primary : (isDark ? COLORS.dark.border : COLORS.light.border) }]}
+              activeOpacity={0.7}>
+              <Ionicons name={loc.icon} size={26} color={isSelected ? COLORS.primary : colors.textMuted} />
+              <Text style={[styles.goalLabel, { color: isSelected ? COLORS.primary : colors.text }]}>{loc.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary, marginTop: 20 }]}>Days per week</Text>
+      <View style={styles.chipRow}>
+        {WORKOUT_FREQUENCIES.map((d) => {
+          const isSelected = workoutDaysPerWeek === d;
+          return (
+            <TouchableOpacity
+              key={d}
+              onPress={() => setWorkoutDaysPerWeek(d)}
+              style={[styles.chip, { backgroundColor: isSelected ? COLORS.primary : (isDark ? COLORS.dark.card : COLORS.light.card), borderColor: isSelected ? COLORS.primary : (isDark ? COLORS.dark.border : COLORS.light.border) }]}
+              activeOpacity={0.7}>
+              <Text style={[styles.chipText, { color: isSelected ? '#FFF' : colors.text }]}>{d}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary, marginTop: 20 }]}>Session length</Text>
+      <View style={styles.chipRow}>
+        {SESSION_DURATIONS.map((m) => {
+          const isSelected = sessionDurationMin === m;
+          return (
+            <TouchableOpacity
+              key={m}
+              onPress={() => setSessionDurationMin(m)}
+              style={[styles.chipWide, { backgroundColor: isSelected ? COLORS.primary : (isDark ? COLORS.dark.card : COLORS.light.card), borderColor: isSelected ? COLORS.primary : (isDark ? COLORS.dark.border : COLORS.light.border) }]}
+              activeOpacity={0.7}>
+              <Text style={[styles.chipText, { color: isSelected ? '#FFF' : colors.text }]}>{m} min</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {wantsTargetWeight && (
+        <View style={[styles.fieldGroup, { marginTop: 20 }]}>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Target weight (optional)</Text>
+          <View style={[styles.inputContainer, { backgroundColor: isDark ? COLORS.dark.inputBg : COLORS.light.inputBg, borderColor: errors.targetWeightKg ? COLORS.danger : (isDark ? COLORS.dark.border : COLORS.light.border) }]}>
+            <Ionicons name="flag-outline" size={18} color={colors.textMuted} />
+            <TextInput
+              value={targetWeightKg}
+              onChangeText={(t) => { setTargetWeightKg(t.replace(/[^0-9.]/g, '')); if (errors.targetWeightKg) setErrors((e) => ({ ...e, targetWeightKg: null })); }}
+              placeholder={fitnessGoal === 'lose_weight' ? 'e.g. 65' : 'e.g. 80'}
+              placeholderTextColor={colors.textMuted}
+              keyboardType="decimal-pad"
+              style={[styles.textInput, { color: colors.text }]}
+              maxLength={6}
+            />
+            <Text style={[styles.inputUnit, { color: colors.textMuted }]}>kg</Text>
+          </View>
+          {errors.targetWeightKg && <Text style={styles.fieldError}>{errors.targetWeightKg}</Text>}
+        </View>
+      )}
+
       {errors.submit && (
         <View style={[styles.errorBanner, { marginTop: 16 }]}>
           <Ionicons name="alert-circle" size={16} color="#FFF" />
@@ -221,6 +332,7 @@ const ProfileSetupScreen = ({ navigation }) => {
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
+            {step === 4 && renderStep4()}
           </Animated.View>
         </ScrollView>
 
@@ -271,6 +383,10 @@ const styles = StyleSheet.create({
   checkBadge: { position: 'absolute', top: 12, right: 12, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   goalsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   goalCard: { borderRadius: 10, borderWidth: 1.5, padding: 14, alignItems: 'center', width: '47%' },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { minWidth: 44, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1.5, alignItems: 'center' },
+  chipWide: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1.5, alignItems: 'center' },
+  chipText: { fontSize: 14, fontWeight: '700' },
   goalLabel: { fontSize: 13, fontWeight: '700', textAlign: 'center', marginTop: 6 },
   errorBanner: { backgroundColor: COLORS.danger, borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
   errorBannerText: { color: '#FFF', fontSize: 13, fontWeight: '500', flex: 1 },
