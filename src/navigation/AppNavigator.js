@@ -10,6 +10,7 @@ import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 import PaywallScreen from '../screens/main/PaywallScreen';
 import ContactScreen from '../screens/main/ContactScreen';
+import SocialScreen from '../screens/main/SocialScreen';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import useTheme from '../hooks/useTheme';
 import { COLORS, ROUTES, STORAGE_KEYS } from '../utils/constants';
@@ -30,6 +31,11 @@ const MainWithPaywall = () => (
     <RootStack.Screen
       name={ROUTES.CONTACT}
       component={ContactScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <RootStack.Screen
+      name={ROUTES.SOCIAL}
+      component={SocialScreen}
       options={{ animation: 'slide_from_right' }}
     />
   </RootStack.Navigator>

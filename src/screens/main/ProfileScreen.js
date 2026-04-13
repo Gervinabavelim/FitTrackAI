@@ -27,6 +27,7 @@ import {
   WORKOUT_LOCATIONS,
   WORKOUT_FREQUENCIES,
   SESSION_DURATIONS,
+  ROUTES,
 } from '../../utils/constants';
 import { calculateBMI, idealWeightRange } from '../../utils/calculations';
 import { cancelAllNotifications, setupNotifications } from '../../services/notificationService';
@@ -790,6 +791,21 @@ const ProfileScreen = ({ navigation }) => {
                 <Text style={{ color: COLORS.primary, fontSize: 11, fontWeight: '700' }}>Unlock All</Text>
               </View>
             )}
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          {/* Friends */}
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => { haptics.light(); navigation.navigate(ROUTES.SOCIAL); }}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.infoIcon, { backgroundColor: `${COLORS.primary}18` }]}>
+              <Ionicons name="people-outline" size={16} color={COLORS.primary} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              Friends & Leaderboard
+            </Text>
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </TouchableOpacity>
 

@@ -225,6 +225,7 @@ export const ROUTES = {
   PROFILE: 'Profile',
   PAYWALL: 'Paywall',
   CONTACT: 'Contact',
+  SOCIAL: 'Social',
 };
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
