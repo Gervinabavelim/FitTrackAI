@@ -20,8 +20,8 @@ import { COLORS, ROUTES } from '../../utils/constants';
 import { formatDuration } from '../../utils/calculations';
 import WorkoutCard from '../../components/WorkoutCard';
 import StatCard from '../../components/StatCard';
-import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
+import Skeleton, { SkeletonCard } from '../../components/Skeleton';
 import useNetworkStatus from '../../hooks/useNetworkStatus';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -123,7 +123,17 @@ const DashboardScreen = ({ navigation }) => {
           { backgroundColor: isDark ? COLORS.dark.background : COLORS.light.background },
         ]}
       >
-        <LoadingSpinner size="large" message="Loading your dashboard..." fullScreen />
+        <View style={{ padding: 20 }}>
+          <Skeleton width="50%" height={22} />
+          <Skeleton width="80%" height={14} style={{ marginTop: 10 }} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 24 }}>
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} width="47%" height={96} borderRadius={16} />
+            ))}
+          </View>
+          <SkeletonCard height={140} />
+          <SkeletonCard height={100} />
+        </View>
       </SafeAreaView>
     );
   }

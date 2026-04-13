@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Dimensions,
   RefreshControl,
-  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +25,7 @@ import {
 } from '../../utils/calculations';
 import { HeroStat } from '../../components/StatCard';
 import Skeleton, { SkeletonStatRow, SkeletonCard } from '../../components/Skeleton';
+import EmptyState from '../../components/EmptyState';
 import useSubscriptionStore from '../../store/subscriptionStore';
 import { ProLockOverlay } from '../../components/ProBadge';
 import { PRO_FEATURES } from '../../utils/proFeatures';
@@ -509,23 +509,13 @@ const ProgressScreen = ({ navigation }) => {
 
             {/* ── Empty State with CTA ── */}
             {workouts.length === 0 && (
-              <View style={styles.emptyState}>
-                <Ionicons name="bar-chart-outline" size={48} color={colors.textMuted} />
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                  No data yet
-                </Text>
-                <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-                  Start your fitness journey today and watch your progress unfold!
-                </Text>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
-                  style={styles.emptyCTA}
-                  activeOpacity={0.85}
-                >
-                  <Ionicons name="add-circle-outline" size={18} color="#FFF" />
-                  <Text style={styles.emptyCTAText}>Log Your First Workout</Text>
-                </TouchableOpacity>
-              </View>
+              <EmptyState
+                icon="bar-chart-outline"
+                title="No data yet"
+                subtitle="Start your fitness journey today and watch your progress unfold."
+                ctaLabel="Log Your First Workout"
+                onCtaPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
+              />
             )}
 
             <View style={{ height: 100 }} />
