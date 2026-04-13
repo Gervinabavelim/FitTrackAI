@@ -17,3 +17,6 @@ web-build/
 functions/.env
 google-service-account-key.json
 screenshots/
+.claude/
+firebase-debug.log
+firestore-debug.log
