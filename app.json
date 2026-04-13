@@ -47,7 +47,16 @@
       ],
       "expo-secure-store",
       "expo-font",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-build-properties",
+        {
+          "ios": { "newArchEnabled": true },
+          "android": { "newArchEnabled": true }
+        }
+      ],
+      "@sentry/react-native",
+      "./plugins/withHealthConnectIntent"
     ],
     "extra": {
       "eas": {

@@ -27,9 +27,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@example.com",
-        "ascAppId": "your-app-store-connect-app-id",
-        "appleTeamId": "your-apple-team-id"
+        "appleId": "$EXPO_APPLE_ID",
+        "ascAppId": "$EXPO_ASC_APP_ID",
+        "appleTeamId": "$EXPO_APPLE_TEAM_ID"
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account-key.json",
