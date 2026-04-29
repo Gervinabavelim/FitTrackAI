@@ -8,6 +8,8 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,6 +53,25 @@ const LogWorkoutScreen = ({ navigation, route }) => {
 
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // ─── Entrance Animations ────────────────────────────────────────────────────
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(-15)).current;
+  const formOpacity = useRef(new Animated.Value(0)).current;
+  const formTranslateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(headerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(headerTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(formOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(formTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
 
   // Pre-fill form when editing an existing workout
   useEffect(() => {
@@ -231,17 +252,18 @@ const LogWorkoutScreen = ({ navigation, route }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerTranslateY }] }]}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Log Workout</Text>
           <TouchableOpacity onPress={resetForm}>
             <Text style={[styles.clearText, { color: COLORS.primary }]}>Clear</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
-        <ScrollView
+        <Animated.ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          style={{ opacity: formOpacity, transform: [{ translateY: formTranslateY }] }}
         >
           {/* Free-tier limit banner */}
           {!isPro && (
@@ -641,7 +663,7 @@ const LogWorkoutScreen = ({ navigation, route }) => {
           </TouchableOpacity>
 
           <View style={{ height: 100 }} />
-        </ScrollView>
+        </Animated.ScrollView>
       </KeyboardAvoidingView>
 
       <ExercisePicker
@@ -664,7 +686,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
-  headerTitle: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  headerTitle: { fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
   clearText: { fontSize: 14, fontWeight: '600' },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 24 },
   recentCard: {

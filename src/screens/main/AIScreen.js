@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -259,6 +261,25 @@ const AIScreen = ({ navigation }) => {
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const { isConnected } = useNetworkStatus();
 
+  // ─── Entrance Animations ────────────────────────────────────────────────────
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(-15)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const contentTranslateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(headerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(headerTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(contentOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(contentTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
+
   const todayTip = FITNESS_TIPS[new Date().getDate() % FITNESS_TIPS.length];
 
   useEffect(() => {
@@ -346,18 +367,18 @@ const AIScreen = ({ navigation }) => {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerTranslateY }] }]}>
           <View>
             <Text style={[styles.headerTitle, { color: colors.text }]}>AI Coach</Text>
             <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
               Powered by GPT-4o-mini
             </Text>
           </View>
-          <View style={[styles.aiBadge, { backgroundColor: `${COLORS.primary}20` }]}>
+          <View style={[styles.aiBadge, { backgroundColor: `${COLORS.primary}15` }]}>
             <Ionicons name="sparkles" size={14} color={COLORS.primary} />
             <Text style={styles.aiBadgeText}>AI</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Pro gate */}
         {!isPro && (
@@ -699,7 +720,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
-  headerTitle: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  headerTitle: { fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
   headerSubtitle: { fontSize: 13, marginTop: 2, fontWeight: '400' },
   aiBadge: {
     flexDirection: 'row',
@@ -736,7 +757,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     gap: 10,
   },
-  generateBtnText: { color: '#FFF', fontSize: 17, fontWeight: '800' },
+  generateBtnText: { color: '#FFF', fontSize: 17, fontWeight: '700' },
   loadingCard: {
     marginHorizontal: 20,
     borderRadius: 10,
@@ -754,7 +775,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 20,
   },
-  planTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.5, marginBottom: 8 },
+  planTitle: { fontSize: 20, fontWeight: '700', letterSpacing: -0.5, marginBottom: 8 },
   planDescription: { fontSize: 14, lineHeight: 22, marginBottom: 12 },
   planMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   planMetaChip: {
@@ -795,7 +816,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   dayNumber: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
-  dayName: { fontSize: 14, fontWeight: '800', marginTop: 2 },
+  dayName: { fontSize: 14, fontWeight: '700', marginTop: 2 },
   dayInfo: { flex: 1 },
   dayFocus: { fontSize: 15, fontWeight: '700', marginBottom: 6 },
   dayMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -911,7 +932,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 40,
   },
-  emptyTitle: { fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 12, marginTop: 16 },
+  emptyTitle: { fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 12, marginTop: 16 },
   emptySubtext: {
     fontSize: 14,
     lineHeight: 24,

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,10 +14,19 @@ import useHaptics from '../hooks/useHaptics';
 import { COLORS, EXERCISE_CATEGORIES } from '../utils/constants';
 import { formatDuration } from '../utils/calculations';
 
-const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
+const WorkoutCard = ({ workout, onDelete, onPress, compact = false, delay = 0 }) => {
   const { isDark, colors } = useTheme();
   const haptics = useHaptics();
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(10)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 350, delay, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 350, delay, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const getCategoryColor = (exerciseName) => {
     for (const [, cat] of Object.entries(EXERCISE_CATEGORIES)) {
@@ -43,7 +52,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
     Animated.spring(scaleAnim, {
       toValue: 0.97,
       useNativeDriver: true,
-      speed: 50,
+      friction: 8,
     }).start();
   };
 
@@ -51,7 +60,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
     Animated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: true,
-      speed: 50,
+      friction: 5,
     }).start();
   };
 
@@ -77,15 +86,16 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        activeOpacity={0.9}
+        activeOpacity={1}
       >
         <Animated.View
           style={[
             styles.compactCard,
             {
               backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-              borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
-              transform: [{ scale: scaleAnim }],
+              borderColor: isDark ? COLORS.dark.border : 'transparent',
+              transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+              opacity: fadeAnim,
             },
           ]}
         >
@@ -94,7 +104,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
           <View style={styles.compactContent}>
             <View style={styles.compactLeft}>
               <Text
-                style={[styles.exerciseName, { color: colors.text, fontSize: 14 }]}
+                style={[styles.exerciseName, { color: colors.text, fontSize: 15 }]}
                 numberOfLines={1}
               >
                 {workout.exerciseName || 'Workout'}
@@ -106,7 +116,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
 
             <View style={styles.compactStats}>
               {workout.sets && workout.reps && (
-                <Text style={[styles.statChip, { backgroundColor: `${categoryColor}18`, color: categoryColor }]}>
+                <Text style={[styles.statChip, { backgroundColor: `${categoryColor}12`, color: categoryColor }]}>
                   {workout.sets}x{workout.reps}
                 </Text>
               )}
@@ -127,15 +137,16 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      activeOpacity={0.9}
+      activeOpacity={1}
     >
       <Animated.View
         style={[
           styles.card,
           {
             backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-            borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
-            transform: [{ scale: scaleAnim }],
+            borderColor: isDark ? COLORS.dark.border : 'transparent',
+            transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+            opacity: fadeAnim,
           },
         ]}
       >
@@ -145,7 +156,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
             <View
               style={[
                 styles.exerciseIcon,
-                { backgroundColor: `${categoryColor}20` },
+                { backgroundColor: `${categoryColor}12` },
               ]}
             >
               <Ionicons
@@ -178,7 +189,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
         <View
           style={[
             styles.divider,
-            { backgroundColor: isDark ? COLORS.dark.border : COLORS.light.border },
+            { backgroundColor: isDark ? COLORS.dark.border : '#F0F0F0' },
           ]}
         />
 
@@ -207,7 +218,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
             style={[
               styles.notes,
               {
-                backgroundColor: isDark ? COLORS.dark.border : '#F0F0F0',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F8F8F8',
               },
             ]}
           >
@@ -227,7 +238,7 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false }) => {
 
 const StatItem = ({ icon, value, label, color, isDark, colors }) => (
   <View style={statStyles.container}>
-    <View style={[statStyles.iconBg, { backgroundColor: `${color}15` }]}>
+    <View style={[statStyles.iconBg, { backgroundColor: `${color}10` }]}>
       <Ionicons name={icon} size={14} color={color} />
     </View>
     <Text style={[statStyles.value, { color: colors.text }]}>{value}</Text>
@@ -248,8 +259,8 @@ function getExerciseIcon(exerciseName = '') {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     marginBottom: 12,
     overflow: 'hidden',
   },
@@ -266,25 +277,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   exerciseIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   exerciseName: {
     fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: -0.3,
+    fontWeight: '600',
+    letterSpacing: -0.2,
   },
   dateText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '400',
     marginTop: 2,
   },
   divider: {
-    height: 1,
+    height: StyleSheet.hairlineWidth,
     marginHorizontal: 16,
   },
   statsGrid: {
@@ -297,7 +308,7 @@ const styles = StyleSheet.create({
     margin: 16,
     marginTop: 4,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     flexDirection: 'row',
     gap: 8,
     alignItems: 'flex-start',
@@ -308,8 +319,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   compactCard: {
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
@@ -324,7 +335,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
+    padding: 14,
   },
   compactLeft: {
     flex: 1,
@@ -336,14 +347,15 @@ const styles = StyleSheet.create({
   },
   statChip: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  calorieText: {
+    paddingVertical: 4,
+    borderRadius: 8,
     fontSize: 12,
     fontWeight: '600',
+    overflow: 'hidden',
+  },
+  calorieText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 });
 
@@ -353,20 +365,20 @@ const statStyles = StyleSheet.create({
     minWidth: 60,
   },
   iconBg: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
   },
   value: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   label: {
-    fontSize: 10,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '400',
     marginTop: 1,
   },
 });

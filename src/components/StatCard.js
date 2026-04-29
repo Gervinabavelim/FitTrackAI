@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import useTheme from '../hooks/useTheme';
 import { COLORS } from '../utils/constants';
@@ -14,9 +14,20 @@ const StatCard = ({
   trendValue,
   style,
   compact = false,
+  delay = 0,
 }) => {
   const { isDark, colors } = useTheme();
   const accentColor = iconColor || COLORS.primary;
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(12)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: 0, duration: 400, delay, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const trendColor =
     trend === 'up' ? COLORS.success :
@@ -29,13 +40,15 @@ const StatCard = ({
     null;
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.card,
         {
           backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-          borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
-          padding: compact ? 12 : 16,
+          borderColor: isDark ? COLORS.dark.border : 'transparent',
+          padding: compact ? 14 : 16,
+          opacity: fadeAnim,
+          transform: [{ translateY }],
         },
         style,
       ]}
@@ -45,10 +58,10 @@ const StatCard = ({
         style={[
           styles.iconContainer,
           {
-            backgroundColor: `${accentColor}18`,
-            width: compact ? 36 : 44,
-            height: compact ? 36 : 44,
-            borderRadius: compact ? 8 : 10,
+            backgroundColor: `${accentColor}12`,
+            width: compact ? 38 : 44,
+            height: compact ? 38 : 44,
+            borderRadius: compact ? 10 : 12,
           },
         ]}
       >
@@ -67,7 +80,7 @@ const StatCard = ({
               styles.value,
               {
                 color: colors.text,
-                fontSize: compact ? 22 : 30,
+                fontSize: compact ? 22 : 28,
               },
             ]}
             numberOfLines={1}
@@ -95,7 +108,7 @@ const StatCard = ({
             styles.label,
             {
               color: colors.textSecondary,
-              fontSize: compact ? 11 : 12,
+              fontSize: compact ? 12 : 13,
             },
           ]}
           numberOfLines={2}
@@ -106,7 +119,7 @@ const StatCard = ({
 
       {/* Trend indicator */}
       {trend && trendValue && (
-        <View style={[styles.trendBadge, { backgroundColor: `${trendColor}18` }]}>
+        <View style={[styles.trendBadge, { backgroundColor: `${trendColor}12` }]}>
           {trendIcon && (
             <Ionicons name={trendIcon} size={12} color={trendColor} />
           )}
@@ -115,7 +128,7 @@ const StatCard = ({
           </Text>
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 };
 
@@ -129,6 +142,7 @@ export const StatCardRow = ({ stats }) => {
           {...stat}
           style={[rowStyles.card, index < stats.length - 1 && rowStyles.cardMargin]}
           compact
+          delay={index * 80}
         />
       ))}
     </View>
@@ -136,28 +150,39 @@ export const StatCardRow = ({ stats }) => {
 };
 
 // ─── Large hero stat (for progress screen) ────────────────────────────────────
-export const HeroStat = ({ icon, iconColor, value, unit, label, isDark, colors }) => {
+export const HeroStat = ({ icon, iconColor, value, unit, label, isDark, colors, delay = 0 }) => {
   const accentColor = iconColor || COLORS.primary;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.92)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 450, delay, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 8, tension: 60, delay, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   return (
-    <View
+    <Animated.View
       style={[
         heroStyles.container,
         {
           backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-          borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
+          borderColor: isDark ? COLORS.dark.border : 'transparent',
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }],
         },
       ]}
     >
       <View
         style={[
           heroStyles.iconBg,
-          { backgroundColor: `${accentColor}20` },
+          { backgroundColor: `${accentColor}15` },
         ]}
       >
-        <Ionicons name={icon} size={32} color={accentColor} />
+        <Ionicons name={icon} size={30} color={accentColor} />
       </View>
-      <Text style={[heroStyles.value, { color: isDark ? '#F5F5F5' : '#FFF' }]}>
+      <Text style={[heroStyles.value, { color: isDark ? '#F5F5F5' : '#111' }]}>
         {value}
         {unit && (
           <Text style={[heroStyles.unit, { color: isDark ? '#A0A0A0' : '#555555' }]}>
@@ -168,14 +193,14 @@ export const HeroStat = ({ icon, iconColor, value, unit, label, isDark, colors }
       <Text style={[heroStyles.label, { color: isDark ? '#A0A0A0' : '#555555' }]}>
         {label}
       </Text>
-    </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -193,20 +218,17 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   value: {
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: -0.5,
   },
   unit: {
     fontWeight: '500',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   label: {
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 2,
     lineHeight: 16,
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 1.0,
   },
   trendBadge: {
     flexDirection: 'row',
@@ -214,7 +236,7 @@ const styles = StyleSheet.create({
     gap: 3,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
     marginLeft: 8,
   },
   trendText: {
@@ -238,24 +260,24 @@ const rowStyles = StyleSheet.create({
 const heroStyles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
     marginHorizontal: 6,
   },
   iconBg: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   value: {
-    fontSize: 36,
-    fontWeight: '900',
+    fontSize: 34,
+    fontWeight: '700',
     letterSpacing: -1,
   },
   unit: {
@@ -263,12 +285,10 @@ const heroStyles = StyleSheet.create({
     fontWeight: '500',
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
     marginTop: 4,
     textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 1.0,
   },
 });
 

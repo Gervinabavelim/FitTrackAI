@@ -39,7 +39,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#3B82F6",
+          "color": "#22C55E",
           "sounds": [],
           "androidMode": "default",
           "androidCollapsedTitle": "FitTrack AI"

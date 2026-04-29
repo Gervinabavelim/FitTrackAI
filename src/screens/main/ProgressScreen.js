@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   StyleSheet,
   Dimensions,
   RefreshControl,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,6 +47,25 @@ const ProgressScreen = ({ navigation }) => {
   const [weightTrend30, setWeightTrend30] = useState([]);
   const [weeklyVolume4, setWeeklyVolume4] = useState([]);
   const [chartDataReady, setChartDataReady] = useState(false);
+
+  // ─── Entrance Animations ────────────────────────────────────────────────────
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(-15)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const contentTranslateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(headerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(headerTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(contentOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(contentTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
 
   useEffect(() => {
     if (user?.uid) {
@@ -187,12 +208,12 @@ const ProgressScreen = ({ navigation }) => {
         }
       >
         {/* Header */}
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerTranslateY }] }]}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Progress</Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
             Last 30 days
           </Text>
-        </View>
+        </Animated.View>
 
         {loading && !refreshing ? (
           <View style={{ paddingTop: 8 }}>
@@ -204,7 +225,7 @@ const ProgressScreen = ({ navigation }) => {
             </View>
           </View>
         ) : (
-          <>
+          <Animated.View style={{ opacity: contentOpacity, transform: [{ translateY: contentTranslateY }] }}>
             {/* ── Hero Stats ── */}
             <ScrollView
               horizontal
@@ -218,6 +239,7 @@ const ProgressScreen = ({ navigation }) => {
                 label="Total Workouts"
                 isDark={isDark}
                 colors={colors}
+                delay={0}
               />
               <HeroStat
                 icon="flame-outline"
@@ -227,6 +249,7 @@ const ProgressScreen = ({ navigation }) => {
                 label="Total Burned"
                 isDark={isDark}
                 colors={colors}
+                delay={80}
               />
               <HeroStat
                 icon="trending-up-outline"
@@ -236,14 +259,16 @@ const ProgressScreen = ({ navigation }) => {
                 label="Current Streak"
                 isDark={isDark}
                 colors={colors}
+                delay={160}
               />
               <HeroStat
                 icon="time-outline"
-                iconColor={COLORS.info}
+                iconColor={COLORS.primaryLight}
                 value={formatDuration(avgDuration)}
                 label="Avg Duration"
                 isDark={isDark}
                 colors={colors}
+                delay={240}
               />
             </ScrollView>
 
@@ -519,7 +544,7 @@ const ProgressScreen = ({ navigation }) => {
             )}
 
             <View style={{ height: 100 }} />
-          </>
+          </Animated.View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -533,8 +558,8 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
   },
-  headerTitle: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 13, marginTop: 4, fontWeight: '400' },
+  headerTitle: { fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
+  headerSubtitle: { fontSize: 14, marginTop: 4, fontWeight: '400' },
   heroStatsRow: {
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -542,27 +567,23 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     marginHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: 20,
     marginBottom: 20,
   },
   summaryTitle: {
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 16,
-    textTransform: 'uppercase',
-    letterSpacing: 1.0,
   },
   summaryRow: { flexDirection: 'row', alignItems: 'center' },
   summaryItem: { flex: 1, alignItems: 'center' },
-  summaryValue: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+  summaryValue: { fontSize: 24, fontWeight: '700', letterSpacing: -0.5 },
   summaryLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
     marginTop: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 1.0,
   },
   summaryDivider: { width: 1, height: 48 },
   chartSection: { marginBottom: 20 },
@@ -579,12 +600,12 @@ const styles = StyleSheet.create({
   },
   chartCard: {
     marginHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
     overflow: 'hidden',
   },
-  chart: { borderRadius: 8 },
+  chart: { borderRadius: 10 },
   emptyChartCard: {
     alignItems: 'center',
     padding: 32,
@@ -613,9 +634,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 14,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
     marginBottom: 20,
   },
   insightText: { fontSize: 13, fontWeight: '600', flex: 1, lineHeight: 20 },

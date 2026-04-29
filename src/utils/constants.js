@@ -140,13 +140,13 @@ export const ALL_EXERCISES = Object.values(EXERCISE_CATEGORIES).flatMap(
 
 // ─── Color Themes ──────────────────────────────────────────────────────────────
 export const COLORS = {
-  primary: '#3B82F6',
-  primaryLight: '#60A5FA',
-  primaryDark: '#2563EB',
+  primary: '#22C55E',
+  primaryLight: '#4ADE80',
+  primaryDark: '#16A34A',
   success: '#22C55E',
   warning: '#FBBF24',
   danger: '#EF4444',
-  info: '#60A5FA',
+  info: '#4ADE80',
 
   dark: {
     background: '#0A0A0A',
@@ -172,7 +172,7 @@ export const COLORS = {
     statusBar: 'dark',
   },
 
-  chart: ['#3B82F6', '#22C55E', '#FBBF24', '#EF4444', '#A78BFA', '#60A5FA'],
+  chart: ['#22C55E', '#3B82F6', '#FBBF24', '#EF4444', '#A78BFA', '#4ADE80'],
 };
 
 // ─── MET Values for Calorie Calculation ────────────────────────────────────────

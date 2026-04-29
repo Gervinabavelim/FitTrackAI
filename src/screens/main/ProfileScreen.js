@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
   Image,
   ActionSheetIOS,
   Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -52,6 +54,25 @@ const ProfileScreen = ({ navigation }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // ─── Entrance Animations ────────────────────────────────────────────────────
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerScale = useRef(new Animated.Value(0.92)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const contentTranslateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(headerOpacity, { toValue: 1, duration: 450, useNativeDriver: true }),
+        Animated.spring(headerScale, { toValue: 1, friction: 8, tension: 60, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(contentOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.timing(contentTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
 
   // ─── Profile Photo ─────────────────────────────────────────────────────────
   const pickImage = async (useCamera = false) => {
@@ -306,7 +327,7 @@ const ProfileScreen = ({ navigation }) => {
         </View>
 
         {/* ── Avatar + Name ── */}
-        <View style={styles.avatarSection}>
+        <Animated.View style={[styles.avatarSection, { opacity: headerOpacity, transform: [{ scale: headerScale }] }]}>
           <TouchableOpacity onPress={handleAvatarPress} activeOpacity={0.8}>
             {profile?.photoUri ? (
               <Image
@@ -352,10 +373,10 @@ const ProfileScreen = ({ navigation }) => {
               {goalLabel || 'No goal set'}
             </Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* ── Stats Row ── */}
-        <View style={styles.statsRow}>
+        <Animated.View style={[styles.statsRow, { opacity: contentOpacity, transform: [{ translateY: contentTranslateY }] }]}>
           {[
             { label: 'Workouts', value: workouts.length, icon: 'fitness-outline', color: COLORS.primary },
             { label: 'Streak', value: streak, icon: 'flame-outline', color: COLORS.warning, showFlame: true },
@@ -379,7 +400,7 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
             </View>
           ))}
-        </View>
+        </Animated.View>
 
         {/* ── Edit Form ── */}
         {isEditing ? (
@@ -920,7 +941,7 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 14,
     alignItems: 'center',
@@ -935,7 +956,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     marginHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 16,
     marginBottom: 16,
@@ -958,7 +979,7 @@ const styles = StyleSheet.create({
   infoValue: { fontSize: 14, fontWeight: '700' },
   bmiRow: {
     marginTop: 8,
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 14,
   },
@@ -1008,7 +1029,7 @@ const styles = StyleSheet.create({
   idealWeight: { fontSize: 12, marginTop: 8, textAlign: 'center' },
   editCard: {
     marginHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 16,
     marginBottom: 16,

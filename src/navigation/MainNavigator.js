@@ -1,7 +1,8 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import DashboardScreen from '../screens/main/DashboardScreen';
 import LogWorkoutScreen from '../screens/main/LogWorkoutScreen';
 import AIScreen from '../screens/main/AIScreen';
@@ -13,19 +14,6 @@ import { COLORS, ROUTES } from '../utils/constants';
 
 const Tab = createBottomTabNavigator();
 
-const TabLabel = ({ label, focused, color }) => (
-  <Text
-    style={{
-      fontSize: 10,
-      fontWeight: focused ? '700' : '500',
-      color,
-      marginTop: 2,
-    }}
-  >
-    {label}
-  </Text>
-);
-
 const MainNavigator = () => {
   const { isDark, colors } = useTheme();
   const { streak } = useWorkoutStore();
@@ -36,17 +24,25 @@ const MainNavigator = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-          borderTopColor: isDark ? COLORS.dark.border : COLORS.light.border,
-          borderTopWidth: 1,
-          paddingTop: 6,
-          paddingBottom: 6,
-          height: 60,
+          position: 'absolute',
+          backgroundColor: isDark ? 'rgba(22,22,22,0.85)' : 'rgba(255,255,255,0.85)',
+          borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+          borderTopWidth: StyleSheet.hairlineWidth,
+          paddingTop: 8,
+          paddingBottom: 8,
+          height: 64,
           elevation: 0,
           shadowOpacity: 0,
         },
+        tabBarBackground: () => (
+          <BlurView
+            tint={isDark ? 'dark' : 'light'}
+            intensity={80}
+            style={StyleSheet.absoluteFill}
+          />
+        ),
         tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: isDark ? COLORS.dark.textMuted : COLORS.light.textMuted,
+        tabBarInactiveTintColor: isDark ? '#666' : '#999',
         tabBarShowLabel: true,
         tabBarHideOnKeyboard: true,
         tabBarIcon: ({ focused, color }) => {
@@ -59,7 +55,7 @@ const MainNavigator = () => {
           };
 
           const iconName = icons[route.name] || 'ellipse';
-          return <Ionicons name={iconName} size={20} color={color} />;
+          return <Ionicons name={iconName} size={22} color={color} />;
         },
         tabBarLabel: ({ focused, color }) => {
           const labels = {
@@ -71,11 +67,9 @@ const MainNavigator = () => {
           };
 
           return (
-            <TabLabel
-              label={labels[route.name] || route.name}
-              focused={focused}
-              color={color}
-            />
+            <Text style={{ fontSize: 10, fontWeight: focused ? '600' : '400', color, marginTop: 2 }}>
+              {labels[route.name] || route.name}
+            </Text>
           );
         },
       })}
@@ -85,7 +79,7 @@ const MainNavigator = () => {
         component={DashboardScreen}
         options={{
           tabBarBadge: streak > 0 ? streak : undefined,
-          tabBarBadgeStyle: streak > 0 ? { backgroundColor: COLORS.primary, color: '#FFF', fontSize: 10, fontWeight: '700' } : undefined,
+          tabBarBadgeStyle: streak > 0 ? { backgroundColor: COLORS.primary, color: '#FFF', fontSize: 10, fontWeight: '700', minWidth: 18, height: 18, lineHeight: 18, borderRadius: 9 } : undefined,
         }}
       />
       <Tab.Screen name={ROUTES.PROGRESS} component={ProgressScreen} />

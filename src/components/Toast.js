@@ -6,7 +6,7 @@ import { useToast } from '../contexts/ToastContext';
 const VARIANT_CONFIG = {
   success: { bg: '#22C55E', icon: 'checkmark-circle' },
   error: { bg: '#EF4444', icon: 'close-circle' },
-  info: { bg: '#60A5FA', icon: 'information-circle' },
+  info: { bg: '#4ADE80', icon: 'information-circle' },
   warning: { bg: '#FBBF24', icon: 'warning' },
 };
 

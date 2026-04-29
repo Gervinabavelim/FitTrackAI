@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   RefreshControl,
   Share,
   Image,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +26,37 @@ import EmptyState from '../../components/EmptyState';
 import Skeleton, { SkeletonCard } from '../../components/Skeleton';
 import useNetworkStatus from '../../hooks/useNetworkStatus';
 import { useToast } from '../../contexts/ToastContext';
+
+// ─── Animated Quick Action ────────────────────────────────────────────────────
+const QuickAction = ({ icon, label, color, onPress, delay = 0 }) => {
+  const scaleAnim = useRef(new Animated.Value(0.85)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, { toValue: 1, friction: 6, tension: 80, delay, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 350, delay, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={() => Animated.spring(pressScale, { toValue: 0.9, friction: 8, useNativeDriver: true }).start()}
+      onPressOut={() => Animated.spring(pressScale, { toValue: 1, friction: 5, useNativeDriver: true }).start()}
+      activeOpacity={1}
+      style={styles.quickActionBtn}
+    >
+      <Animated.View style={{ alignItems: 'center', opacity: fadeAnim, transform: [{ scale: Animated.multiply(scaleAnim, pressScale) }] }}>
+        <View style={[styles.quickActionIcon, { backgroundColor: `${color}12` }]}>
+          <Ionicons name={icon} size={22} color={color} />
+        </View>
+        <Text style={[styles.quickActionLabel, { color: '#888' }]}>{label}</Text>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 const DashboardScreen = ({ navigation }) => {
   const { user, profile } = useAuthStore();
@@ -48,6 +81,14 @@ const DashboardScreen = ({ navigation }) => {
   const [initialLoad, setInitialLoad] = useState(true);
   const [greeting, setGreeting] = useState('');
 
+  // ─── Entrance Animations ────────────────────────────────────────────────────
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(-15)).current;
+  const streakOpacity = useRef(new Animated.Value(0)).current;
+  const streakTranslateY = useRef(new Animated.Value(10)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const contentTranslateY = useRef(new Animated.Value(20)).current;
+
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting('Good morning');
@@ -56,9 +97,9 @@ const DashboardScreen = ({ navigation }) => {
   }, []);
 
   const motivationalTexts = [
-    'Every rep counts!',
+    'Every rep counts.',
     'Consistency beats perfection.',
-    "Let's crush it today!",
+    "Let's crush it today.",
     'Your body will thank you.',
     'Small steps, big results.',
   ];
@@ -74,6 +115,26 @@ const DashboardScreen = ({ navigation }) => {
   useEffect(() => {
     computeWeeklyStats();
   }, [workouts]);
+
+  // Play entrance animation once data is loaded
+  useEffect(() => {
+    if (!initialLoad) {
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(headerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(headerTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(streakOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+          Animated.timing(streakTranslateY, { toValue: 0, duration: 350, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(contentOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(contentTranslateY, { toValue: 0, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        ]),
+      ]).start();
+    }
+  }, [initialLoad]);
 
   const onRefresh = useCallback(async () => {
     if (!isConnected) {
@@ -118,10 +179,7 @@ const DashboardScreen = ({ navigation }) => {
   if (initialLoad && loading) {
     return (
       <SafeAreaView
-        style={[
-          styles.container,
-          { backgroundColor: isDark ? COLORS.dark.background : COLORS.light.background },
-        ]}
+        style={[styles.container, { backgroundColor: isDark ? COLORS.dark.background : COLORS.light.background }]}
       >
         <View style={{ padding: 20 }}>
           <Skeleton width="50%" height={22} />
@@ -140,10 +198,7 @@ const DashboardScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView
-      style={[
-        styles.container,
-        { backgroundColor: isDark ? COLORS.dark.background : COLORS.light.background },
-      ]}
+      style={[styles.container, { backgroundColor: isDark ? COLORS.dark.background : COLORS.light.background }]}
     >
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -157,7 +212,7 @@ const DashboardScreen = ({ navigation }) => {
         }
       >
         {/* Header */}
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerTranslateY }] }]}>
           <View>
             <Text style={[styles.greeting, { color: colors.textSecondary }]}>
               {greeting},
@@ -174,39 +229,33 @@ const DashboardScreen = ({ navigation }) => {
             activeOpacity={0.8}
           >
             {profile?.photoUri ? (
-              <Image
-                source={{ uri: profile.photoUri }}
-                style={styles.avatarPhoto}
-              />
+              <Image source={{ uri: profile.photoUri }} style={styles.avatarPhoto} />
             ) : (
-              <View
-                style={[
-                  styles.avatarBtn,
-                  { backgroundColor: `${COLORS.primary}20` },
-                ]}
-              >
-                <Text style={styles.avatarEmoji}>
+              <View style={[styles.avatarBtn, { backgroundColor: `${COLORS.primary}12` }]}>
+                <Text style={[styles.avatarEmoji, { color: COLORS.primary }]}>
                   {firstName.charAt(0).toUpperCase()}
                 </Text>
               </View>
             )}
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
         {/* Streak Banner */}
-        <View
+        <Animated.View
           style={[
             styles.streakBanner,
             {
-              backgroundColor: streak > 0 ? `${COLORS.primary}18` : (isDark ? COLORS.dark.card : COLORS.light.card),
-              borderColor: streak > 0 ? `${COLORS.primary}40` : (isDark ? COLORS.dark.border : COLORS.light.border),
+              backgroundColor: streak > 0 ? `${COLORS.primary}10` : (isDark ? COLORS.dark.card : COLORS.light.card),
+              borderColor: streak > 0 ? `${COLORS.primary}25` : (isDark ? COLORS.dark.border : 'transparent'),
+              opacity: streakOpacity,
+              transform: [{ translateY: streakTranslateY }],
             },
           ]}
         >
           <View style={styles.streakLeft}>
             <Ionicons
               name={streak > 0 ? 'flame' : 'bed-outline'}
-              size={28}
+              size={26}
               color={streak > 0 ? COLORS.primary : colors.textMuted}
             />
             <View>
@@ -228,7 +277,7 @@ const DashboardScreen = ({ navigation }) => {
               {format(new Date(), 'MMM d')}
             </Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
@@ -236,173 +285,175 @@ const DashboardScreen = ({ navigation }) => {
             { icon: 'add-circle-outline', label: 'Log', color: COLORS.primary, route: ROUTES.LOG_WORKOUT },
             { icon: 'sparkles-outline', label: 'AI Plan', color: COLORS.warning, route: ROUTES.AI_SUGGESTIONS },
             { icon: 'bar-chart-outline', label: 'Progress', color: COLORS.success, route: ROUTES.PROGRESS },
-            { icon: 'person-outline', label: 'Profile', color: COLORS.info, route: ROUTES.PROFILE },
+            { icon: 'person-outline', label: 'Profile', color: COLORS.primaryLight, route: ROUTES.PROFILE },
           ].map((action, i) => (
-            <TouchableOpacity
+            <QuickAction
               key={i}
+              icon={action.icon}
+              label={action.label}
+              color={action.color}
+              delay={i * 60}
               onPress={() => { haptics.light(); navigation.navigate(action.route); }}
-              style={styles.quickActionBtn}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.quickActionIcon, { backgroundColor: `${action.color}15` }]}>
-                <Ionicons name={action.icon} size={22} color={action.color} />
-              </View>
-              <Text style={[styles.quickActionLabel, { color: colors.textSecondary }]}>
-                {action.label}
-              </Text>
-            </TouchableOpacity>
+            />
           ))}
         </View>
 
-        {/* Stats or Welcome */}
-        {workouts.length === 0 ? (
-          <View
-            style={[
-              styles.welcomeCard,
-              {
-                backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-                borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
-              },
-            ]}
-          >
-            <Text style={[styles.welcomeTitle, { color: colors.text }]}>
-              Welcome to FitTrack AI!
-            </Text>
-            <Text style={[styles.welcomeSubtext, { color: colors.textMuted }]}>
-              Get started with these actions:
-            </Text>
-            {[
-              { icon: 'add-circle-outline', label: 'Log your first workout', route: ROUTES.LOG_WORKOUT, color: COLORS.primary },
-              { icon: 'sparkles-outline', label: 'Generate an AI plan', route: ROUTES.AI_SUGGESTIONS, color: COLORS.warning },
-              { icon: 'person-outline', label: 'Complete your profile', route: ROUTES.PROFILE, color: COLORS.info },
-            ].map((cta, i) => (
-              <TouchableOpacity
-                key={i}
-                onPress={() => navigation.navigate(cta.route)}
-                style={styles.welcomeCTA}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.welcomeCTAIcon, { backgroundColor: `${cta.color}15` }]}>
-                  <Ionicons name={cta.icon} size={18} color={cta.color} />
-                </View>
-                <Text style={[styles.welcomeCTAText, { color: colors.text }]}>{cta.label}</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.statsSection}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>THIS WEEK</Text>
-            <View style={styles.statsGrid}>
-              <StatCard
-                icon="fitness-outline"
-                iconColor={COLORS.primary}
-                value={weeklyWorkoutCount}
-                label="Workouts"
-                style={styles.statCardHalf}
-              />
-              <StatCard
-                icon="flame-outline"
-                iconColor={COLORS.warning}
-                value={totalCalories > 999 ? `${(totalCalories / 1000).toFixed(1)}k` : totalCalories}
-                label="Total Calories"
-                style={styles.statCardHalf}
-              />
-            </View>
-            <View style={[styles.statsGrid, { marginTop: 12 }]}>
-              <StatCard
-                icon="time-outline"
-                iconColor={COLORS.info}
-                value={formatDuration(avgDuration)}
-                label="Avg Duration"
-                style={styles.statCardHalf}
-              />
-              <StatCard
-                icon="trophy-outline"
-                iconColor={COLORS.success}
-                value={workouts.length}
-                label="Total Workouts"
-                style={styles.statCardHalf}
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Today's Workouts */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>TODAY</Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
-              style={[styles.addBtn, { backgroundColor: `${COLORS.primary}18` }]}
+        {/* Animated Content */}
+        <Animated.View style={{ opacity: contentOpacity, transform: [{ translateY: contentTranslateY }] }}>
+          {/* Stats or Welcome */}
+          {workouts.length === 0 ? (
+            <View
+              style={[
+                styles.welcomeCard,
+                {
+                  backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
+                  borderColor: isDark ? COLORS.dark.border : 'transparent',
+                },
+              ]}
             >
-              <Ionicons name="add" size={16} color={COLORS.primary} />
-              <Text style={[styles.addBtnText, { color: COLORS.primary }]}>Log</Text>
-            </TouchableOpacity>
-          </View>
-
-          {todayWorkouts.length > 0 ? (
-            todayWorkouts.map((workout) => (
-              <WorkoutCard
-                key={workout.id}
-                workout={workout}
-                onDelete={handleDeleteWorkout}
-                onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT, { editWorkout: workout })}
-                compact
-              />
-            ))
+              <Text style={[styles.welcomeTitle, { color: colors.text }]}>
+                Welcome to FitTrack AI
+              </Text>
+              <Text style={[styles.welcomeSubtext, { color: colors.textMuted }]}>
+                Get started with these actions:
+              </Text>
+              {[
+                { icon: 'add-circle-outline', label: 'Log your first workout', route: ROUTES.LOG_WORKOUT, color: COLORS.primary },
+                { icon: 'sparkles-outline', label: 'Generate an AI plan', route: ROUTES.AI_SUGGESTIONS, color: COLORS.warning },
+                { icon: 'person-outline', label: 'Complete your profile', route: ROUTES.PROFILE, color: COLORS.primaryLight },
+              ].map((cta, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => navigation.navigate(cta.route)}
+                  style={styles.welcomeCTA}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.welcomeCTAIcon, { backgroundColor: `${cta.color}12` }]}>
+                    <Ionicons name={cta.icon} size={18} color={cta.color} />
+                  </View>
+                  <Text style={[styles.welcomeCTAText, { color: colors.text }]}>{cta.label}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+              ))}
+            </View>
           ) : (
-            <EmptyState
-              icon="barbell-outline"
-              title="No workout logged today"
-              subtitle="Tap below to log your first session of the day."
-              ctaLabel="Log a Workout"
-              onCtaPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
-            />
+            <View style={styles.statsSection}>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>This Week</Text>
+              <View style={styles.statsGrid}>
+                <StatCard
+                  icon="fitness-outline"
+                  iconColor={COLORS.primary}
+                  value={weeklyWorkoutCount}
+                  label="Workouts"
+                  style={styles.statCardHalf}
+                  delay={0}
+                />
+                <StatCard
+                  icon="flame-outline"
+                  iconColor={COLORS.warning}
+                  value={totalCalories > 999 ? `${(totalCalories / 1000).toFixed(1)}k` : totalCalories}
+                  label="Total Calories"
+                  style={styles.statCardHalf}
+                  delay={80}
+                />
+              </View>
+              <View style={[styles.statsGrid, { marginTop: 12 }]}>
+                <StatCard
+                  icon="time-outline"
+                  iconColor={COLORS.primaryLight}
+                  value={formatDuration(avgDuration)}
+                  label="Avg Duration"
+                  style={styles.statCardHalf}
+                  delay={160}
+                />
+                <StatCard
+                  icon="trophy-outline"
+                  iconColor={COLORS.success}
+                  value={workouts.length}
+                  label="Total Workouts"
+                  style={styles.statCardHalf}
+                  delay={240}
+                />
+              </View>
+            </View>
           )}
-        </View>
 
-        {/* Recent Workouts */}
-        {recentWorkouts.length > 0 && (
+          {/* Today's Workouts */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>RECENT</Text>
-              <TouchableOpacity onPress={() => navigation.navigate(ROUTES.PROGRESS)}>
-                <Text style={[styles.viewAllText, { color: COLORS.primary }]}>
-                  View all
-                </Text>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Today</Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
+                style={[styles.addBtn, { backgroundColor: `${COLORS.primary}10` }]}
+              >
+                <Ionicons name="add" size={16} color={COLORS.primary} />
+                <Text style={[styles.addBtnText, { color: COLORS.primary }]}>Log</Text>
               </TouchableOpacity>
             </View>
-            {recentWorkouts.slice(0, 5).map((workout) => (
-              <WorkoutCard
-                key={workout.id}
-                workout={workout}
-                onDelete={handleDeleteWorkout}
-                onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT, { editWorkout: workout })}
-                compact
+
+            {todayWorkouts.length > 0 ? (
+              todayWorkouts.map((workout, i) => (
+                <WorkoutCard
+                  key={workout.id}
+                  workout={workout}
+                  onDelete={handleDeleteWorkout}
+                  onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT, { editWorkout: workout })}
+                  compact
+                  delay={i * 60}
+                />
+              ))
+            ) : (
+              <EmptyState
+                icon="barbell-outline"
+                title="No workout logged today"
+                subtitle="Tap below to log your first session of the day."
+                ctaLabel="Log a Workout"
+                onCtaPress={() => navigation.navigate(ROUTES.LOG_WORKOUT)}
               />
-            ))}
+            )}
           </View>
-        )}
 
-        {/* AI CTA */}
-        <TouchableOpacity
-          onPress={() => navigation.navigate(ROUTES.AI_SUGGESTIONS)}
-          style={styles.aiCTA}
-          activeOpacity={0.9}
-        >
-          <View style={styles.aiCTAContent}>
-            <View>
-              <Text style={styles.aiCTATitle}>AI Workout Plan</Text>
-              <Text style={styles.aiCTASubtext}>
-                Get a personalized 7-day plan crafted for your goals
-              </Text>
+          {/* Recent Workouts */}
+          {recentWorkouts.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Recent</Text>
+                <TouchableOpacity onPress={() => navigation.navigate(ROUTES.PROGRESS)}>
+                  <Text style={[styles.viewAllText, { color: COLORS.primary }]}>View all</Text>
+                </TouchableOpacity>
+              </View>
+              {recentWorkouts.slice(0, 5).map((workout, i) => (
+                <WorkoutCard
+                  key={workout.id}
+                  workout={workout}
+                  onDelete={handleDeleteWorkout}
+                  onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT, { editWorkout: workout })}
+                  compact
+                  delay={i * 50}
+                />
+              ))}
             </View>
-            <Ionicons name="arrow-forward" size={20} color="#FFF" />
-          </View>
-        </TouchableOpacity>
+          )}
 
-        <View style={{ height: 100 }} />
+          {/* AI CTA */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate(ROUTES.AI_SUGGESTIONS)}
+            style={[styles.aiCTA, { backgroundColor: COLORS.primary }]}
+            activeOpacity={0.9}
+          >
+            <View style={styles.aiCTAContent}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.aiCTATitle}>AI Workout Plan</Text>
+                <Text style={styles.aiCTASubtext}>
+                  Get a personalized 7-day plan crafted for your goals
+                </Text>
+              </View>
+              <Ionicons name="arrow-forward" size={20} color="#FFF" />
+            </View>
+          </TouchableOpacity>
+
+          <View style={{ height: 100 }} />
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -418,44 +469,42 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
-  greeting: { fontSize: 14, fontWeight: '500' },
-  userName: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 },
-  motivational: { fontSize: 13, fontWeight: '500', marginTop: 3, fontStyle: 'italic' },
+  greeting: { fontSize: 15, fontWeight: '400' },
+  userName: { fontSize: 28, fontWeight: '700', letterSpacing: -0.5, marginTop: 2 },
+  motivational: { fontSize: 14, fontWeight: '400', marginTop: 4 },
   avatarPhoto: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
+    borderRadius: 16,
   },
   avatarBtn: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarEmoji: { fontSize: 20, fontWeight: '700', color: COLORS.primary },
+  avatarEmoji: { fontSize: 20, fontWeight: '600' },
   streakBanner: {
     marginHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   streakLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  streakCount: { fontSize: 18, fontWeight: '800' },
-  streakLabel: { fontSize: 12, fontWeight: '500', marginTop: 2 },
+  streakCount: { fontSize: 17, fontWeight: '600' },
+  streakLabel: { fontSize: 13, fontWeight: '400', marginTop: 2 },
   streakRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  todayDate: { fontSize: 14, fontWeight: '600' },
+  todayDate: { fontSize: 14, fontWeight: '500' },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 28,
   },
   quickActionBtn: {
     alignItems: 'center',
@@ -464,49 +513,39 @@ const styles = StyleSheet.create({
   quickActionIcon: {
     width: 52,
     height: 52,
-    borderRadius: 10,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   quickActionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
   },
-  statsSection: { paddingHorizontal: 20, marginBottom: 24 },
+  statsSection: { paddingHorizontal: 20, marginBottom: 28 },
   statsGrid: { flexDirection: 'row', gap: 12 },
   statCardHalf: { flex: 1 },
-  section: { paddingHorizontal: 20, marginBottom: 24 },
+  section: { paddingHorizontal: 20, marginBottom: 28 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  sectionTitle: { fontSize: 13, fontWeight: '700', letterSpacing: 1.0, textTransform: 'uppercase' },
+  sectionTitle: { fontSize: 14, fontWeight: '600' },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 8,
   },
-  addBtnText: { fontSize: 13, fontWeight: '700' },
-  viewAllText: { fontSize: 13, fontWeight: '600' },
-  emptyTodayCard: {
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    padding: 24,
-    alignItems: 'center',
-  },
-  emptyTodayTitle: { fontSize: 16, fontWeight: '700', textAlign: 'center', marginTop: 8 },
-  emptyTodaySubtext: { fontSize: 13, textAlign: 'center', marginTop: 4, lineHeight: 18 },
+  addBtnText: { fontSize: 13, fontWeight: '600' },
+  viewAllText: { fontSize: 14, fontWeight: '600' },
   aiCTA: {
     marginHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: COLORS.primary,
   },
   aiCTAContent: {
     flexDirection: 'row',
@@ -514,17 +553,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
   },
-  aiCTATitle: { fontSize: 16, fontWeight: '800', color: '#FFF', marginBottom: 4 },
-  aiCTASubtext: { fontSize: 13, color: 'rgba(0,0,0,0.6)', lineHeight: 18 },
+  aiCTATitle: { fontSize: 17, fontWeight: '600', color: '#FFF', marginBottom: 4 },
+  aiCTASubtext: { fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 18 },
   welcomeCard: {
     marginHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 28,
   },
-  welcomeTitle: { fontSize: 18, fontWeight: '800', marginBottom: 4 },
-  welcomeSubtext: { fontSize: 13, marginBottom: 16 },
+  welcomeTitle: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
+  welcomeSubtext: { fontSize: 14, marginBottom: 16 },
   welcomeCTA: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -538,7 +577,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  welcomeCTAText: { flex: 1, fontSize: 14, fontWeight: '600' },
+  welcomeCTAText: { flex: 1, fontSize: 15, fontWeight: '500' },
 });
 
 export default DashboardScreen;
