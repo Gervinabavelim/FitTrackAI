@@ -61,7 +61,7 @@ const AppNavigator = () => {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETE).then((val) => {
       setOnboardingDone(val === 'true');
-    });
+    }).catch(() => {});
   }, []);
 
   // Initialize subscription store when authenticated
@@ -78,7 +78,7 @@ const AppNavigator = () => {
         if (val === 'true') {
           setupNotifications(profile.name?.split(' ')[0]);
         }
-      });
+      }).catch(() => {});
     }
   }, [user, profile]);
 

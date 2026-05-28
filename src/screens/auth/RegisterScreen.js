@@ -139,8 +139,13 @@ const RegisterScreen = ({ navigation }) => {
     }
   };
 
+  const isWebPreview = Platform.OS === 'web';
+  const showAppleSignIn = Platform.OS === 'ios' || isWebPreview;
+  const showGoogleSignIn = true;
+
   const handleSocialSignIn = (provider) => {
-    Alert.alert(`${provider} Sign Up`, `${provider} sign-up will be available soon.`);
+    const previewNote = isWebPreview ? 'in the web preview' : 'on this device';
+    Alert.alert(`${provider} Sign Up`, `${provider} sign-up is not wired up ${previewNote} yet.`);
   };
 
   const handleContinueWithEmail = () => {
@@ -173,6 +178,14 @@ const RegisterScreen = ({ navigation }) => {
 
           {/* Main Content */}
           <Animated.View style={{ transform: [{ translateX: shakeAnim }, { translateY: contentTranslateY }], opacity: contentOpacity }}>
+            <Text style={[styles.subtitleHint, { color: colors.textSecondary }]}>Use Google, Apple, or email to create your account.</Text>
+            {isWebPreview && (
+              <View style={[styles.previewBanner, { backgroundColor: isDark ? 'rgba(59,130,246,0.16)' : 'rgba(59,130,246,0.1)' }]}>
+                <Ionicons name="information-circle" size={16} color="#FFF" />
+                <Text style={styles.errorBannerText}>Social sign-in is visible here, but it still needs wiring.</Text>
+              </View>
+            )}
+
             {authError && (
               <View style={styles.errorBanner}>
                 <Ionicons name="alert-circle" size={16} color="#FFF" />
@@ -181,24 +194,28 @@ const RegisterScreen = ({ navigation }) => {
             )}
 
             {/* Sign up with Apple */}
-            <TouchableOpacity
-              style={[styles.authBtn, { borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#E0E0E0', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF' }]}
-              onPress={() => handleSocialSignIn('Apple')}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="logo-apple" size={20} color={colors.text} />
-              <Text style={[styles.authBtnText, { color: colors.text }]}>Sign up with Apple</Text>
-            </TouchableOpacity>
+            {showAppleSignIn && (
+              <TouchableOpacity
+                style={[styles.socialBtn, { borderColor: isDark ? 'rgba(255,255,255,0.14)' : '#D7DCE3', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF' }]}
+                onPress={() => handleSocialSignIn('Apple')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="logo-apple" size={20} color={colors.text} />
+                <Text style={[styles.authBtnText, { color: colors.text }]}>Sign up with Apple</Text>
+              </TouchableOpacity>
+            )}
 
             {/* Continue with Google */}
-            <TouchableOpacity
-              style={[styles.authBtn, { borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#E0E0E0', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF' }]}
-              onPress={() => handleSocialSignIn('Google')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.googleIcon}>G</Text>
-              <Text style={[styles.authBtnText, { color: colors.text }]}>Continue with Google</Text>
-            </TouchableOpacity>
+            {showGoogleSignIn && (
+              <TouchableOpacity
+                style={[styles.socialBtn, { borderColor: isDark ? 'rgba(255,255,255,0.14)' : '#D7DCE3', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF' }]}
+                onPress={() => handleSocialSignIn('Google')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.googleIcon}>G</Text>
+                <Text style={[styles.authBtnText, { color: colors.text }]}>Continue with Google</Text>
+              </TouchableOpacity>
+            )}
 
             {/* Divider */}
             <View style={styles.dividerRow}>
@@ -209,7 +226,7 @@ const RegisterScreen = ({ navigation }) => {
 
             {!showEmailForm ? (
               <TouchableOpacity
-                style={[styles.authBtn, { borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#E0E0E0', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF' }]}
+                style={[styles.emailBtn, { borderColor: isDark ? 'rgba(255,255,255,0.14)' : '#D7DCE3', backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF' }]}
                 onPress={handleContinueWithEmail}
                 activeOpacity={0.7}
               >
@@ -361,9 +378,11 @@ const styles = StyleSheet.create({
   headerSection: { marginBottom: 32 },
   title: { fontSize: 28, fontWeight: '700', letterSpacing: -0.3 },
   subtitle: { fontSize: 15, marginTop: 6, fontWeight: '400' },
+  subtitleHint: { fontSize: 14, marginTop: 8, marginBottom: 14, lineHeight: 20 },
 
   // Error
   errorBanner: { backgroundColor: COLORS.danger, borderRadius: 12, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+  previewBanner: { borderRadius: 12, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   errorBannerText: { color: '#FFF', fontSize: 13, fontWeight: '500', flex: 1 },
 
   // Auth buttons
@@ -372,6 +391,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
+    borderWidth: 1,
+    paddingVertical: 15,
+    gap: 10,
+    marginBottom: 12,
+  },
+  socialBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingVertical: 15,
+    gap: 10,
+    marginBottom: 12,
+  },
+  emailBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
     borderWidth: 1,
     paddingVertical: 15,
     gap: 10,
