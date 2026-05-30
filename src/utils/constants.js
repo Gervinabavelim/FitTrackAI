@@ -140,39 +140,39 @@ export const ALL_EXERCISES = Object.values(EXERCISE_CATEGORIES).flatMap(
 
 // ─── Color Themes ──────────────────────────────────────────────────────────────
 export const COLORS = {
-  primary: '#22C55E',
-  primaryLight: '#4ADE80',
-  primaryDark: '#16A34A',
+  primary: '#F97316',
+  primaryLight: '#FB923C',
+  primaryDark: '#EA580C',
   success: '#22C55E',
   warning: '#FBBF24',
   danger: '#EF4444',
-  info: '#4ADE80',
+  info: '#3B82F6',
 
   dark: {
     background: '#0A0A0A',
-    card: '#161616',
-    cardSecondary: '#1C1C1E',
-    border: '#2A2A2A',
-    text: '#F5F5F5',
-    textSecondary: '#A0A0A0',
-    textMuted: '#666666',
-    inputBg: '#1C1C1E',
+    card: '#141414',
+    cardSecondary: '#1A1A1A',
+    border: '#252525',
+    text: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    textMuted: '#64748B',
+    inputBg: '#1A1A1A',
     statusBar: 'light',
   },
 
   light: {
-    background: '#F5F5F5',
+    background: '#F8FAFC',
     card: '#FFFFFF',
-    cardSecondary: '#F0F0F0',
-    border: '#E0E0E0',
-    text: '#111111',
-    textSecondary: '#555555',
-    textMuted: '#999999',
-    inputBg: '#F0F0F0',
+    cardSecondary: '#F1F5F9',
+    border: '#E2E8F0',
+    text: '#0F172A',
+    textSecondary: '#475569',
+    textMuted: '#94A3B8',
+    inputBg: '#F1F5F9',
     statusBar: 'dark',
   },
 
-  chart: ['#22C55E', '#3B82F6', '#FBBF24', '#EF4444', '#A78BFA', '#4ADE80'],
+  chart: ['#F97316', '#3B82F6', '#FBBF24', '#EF4444', '#A78BFA', '#22C55E'],
 };
 
 // ─── MET Values for Calorie Calculation ────────────────────────────────────────

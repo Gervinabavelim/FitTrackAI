@@ -448,7 +448,7 @@ const AIScreen = ({ navigation }) => {
             activeOpacity={0.85}
           >
             <View style={styles.generateGradient}>
-              <Ionicons name="sparkles" size={22} color="#FFF" />
+              <Ionicons name="sparkles" size={22} color="#0F172A" />
               <Text style={styles.generateBtnText}>
                 {cooldownSeconds > 0
                   ? `Wait ${cooldownSeconds}s`
@@ -604,7 +604,7 @@ const AIScreen = ({ navigation }) => {
             >
               {saving ? (
                 <View style={styles.btnContent}>
-                  <InlineSpinner color="#FFF" size={18} />
+                  <InlineSpinner color="#0F172A" size={18} />
                   <Text style={styles.saveBtnText}>Saving...</Text>
                 </View>
               ) : (
@@ -612,7 +612,7 @@ const AIScreen = ({ navigation }) => {
                   <Ionicons
                     name={planSaved ? 'checkmark-circle' : 'bookmark-outline'}
                     size={20}
-                    color="#FFF"
+                    color="#0F172A"
                   />
                   <Text style={styles.saveBtnText}>
                     {planSaved ? 'Plan Saved' : 'Save This Plan'}
@@ -757,7 +757,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     gap: 10,
   },
-  generateBtnText: { color: '#FFF', fontSize: 17, fontWeight: '700' },
+  generateBtnText: { color: '#0F172A', fontSize: 17, fontWeight: '700' },
   loadingCard: {
     marginHorizontal: 20,
     borderRadius: 10,
@@ -925,7 +925,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
   },
-  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  saveBtnText: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   emptyState: {
     alignItems: 'center',

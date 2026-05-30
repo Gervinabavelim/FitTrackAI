@@ -336,7 +336,7 @@ const RegisterScreen = ({ navigation }) => {
                   >
                     {loading ? (
                       <View style={styles.btnContent}>
-                        <InlineSpinner color="#FFF" size={18} />
+                        <InlineSpinner color="#0F172A" size={18} />
                         <Text style={styles.createBtnText}>Creating account...</Text>
                       </View>
                     ) : (
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
 
   // Create Account
   createBtn: { borderRadius: 12, paddingVertical: 16, alignItems: 'center', justifyContent: 'center' },
-  createBtnText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  createBtnText: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 
   // Footer

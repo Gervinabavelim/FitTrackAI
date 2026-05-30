@@ -248,7 +248,7 @@ const PaywallScreen = ({ navigation, route }) => {
           activeOpacity={0.85}
         >
           {purchasing ? (
-            <ActivityIndicator size="small" color="#FFF" />
+            <ActivityIndicator size="small" color="#0F172A" />
           ) : (
             <Text style={styles.purchaseBtnText}>
               {selectedPkg ? `Subscribe Now` : 'Select a Plan'}
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   purchaseBtnText: {
-    color: '#FFF',
+    color: '#0F172A',
     fontSize: 17,
     fontWeight: '800',
   },

@@ -146,7 +146,7 @@ const OnboardingScreen = ({ onComplete }) => {
               {isLastSlide ? 'Get Started' : 'Next'}
             </Text>
             {!isLastSlide && (
-              <Ionicons name="arrow-forward" size={18} color="#FFF" />
+              <Ionicons name="arrow-forward" size={18} color="#0F172A" />
             )}
           </TouchableOpacity>
         </View>
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
   },
   buttonText: {
-    color: '#FFF',
+    color: '#0F172A',
     fontSize: 17,
     fontWeight: '800',
   },

@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   sub: { fontSize: 12, marginTop: 2 },
   iconBtn: { padding: 4 },
   acceptBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
-  acceptText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
+  acceptText: { color: '#0F172A', fontWeight: '700', fontSize: 13 },
   sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
 });
 

@@ -448,7 +448,7 @@ const DashboardScreen = ({ navigation }) => {
                   Get a personalized 7-day plan crafted for your goals
                 </Text>
               </View>
-              <Ionicons name="arrow-forward" size={20} color="#FFF" />
+              <Ionicons name="arrow-forward" size={20} color="#0F172A" />
             </View>
           </TouchableOpacity>
 
@@ -553,8 +553,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
   },
-  aiCTATitle: { fontSize: 17, fontWeight: '600', color: '#FFF', marginBottom: 4 },
-  aiCTASubtext: { fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 18 },
+  aiCTATitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+  aiCTASubtext: { fontSize: 13, color: 'rgba(15,23,42,0.6)', lineHeight: 18 },
   welcomeCard: {
     marginHorizontal: 20,
     borderRadius: 14,

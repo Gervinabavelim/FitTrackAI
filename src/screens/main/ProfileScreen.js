@@ -460,7 +460,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.fitnessLevel === level.value ? '#FFF' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
+                  <Text style={{ color: editData.fitnessLevel === level.value ? '#0F172A' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
                     {level.label}
                   </Text>
                 </TouchableOpacity>
@@ -484,7 +484,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.fitnessGoal === goal.value ? '#FFF' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
+                  <Text style={{ color: editData.fitnessGoal === goal.value ? '#0F172A' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
                     {goal.label}
                   </Text>
                 </TouchableOpacity>
@@ -508,7 +508,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.workoutLocation === loc.value ? '#FFF' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
+                  <Text style={{ color: editData.workoutLocation === loc.value ? '#0F172A' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
                     {loc.label}
                   </Text>
                 </TouchableOpacity>
@@ -532,7 +532,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.workoutDaysPerWeek === d ? '#FFF' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
+                  <Text style={{ color: editData.workoutDaysPerWeek === d ? '#0F172A' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
                     {d}
                   </Text>
                 </TouchableOpacity>
@@ -556,7 +556,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.sessionDurationMin === m ? '#FFF' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
+                  <Text style={{ color: editData.sessionDurationMin === m ? '#0F172A' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
                     {m} min
                   </Text>
                 </TouchableOpacity>
@@ -600,7 +600,7 @@ const ProfileScreen = ({ navigation }) => {
               >
                 {loading ? (
                   <View style={styles.btnRow}>
-                    <InlineSpinner color="#FFF" size={16} />
+                    <InlineSpinner color="#0F172A" size={16} />
                     <Text style={styles.saveBtnText}>Saving...</Text>
                   </View>
                 ) : (
@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 3,
   },
-  avatarText: { fontSize: 36, fontWeight: '800', color: COLORS.primary },
+  avatarText: { fontSize: 36, fontWeight: '800' },
   profileName: { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
   profileEmail: { fontSize: 13, marginTop: 4 },
   goalBadge: {
@@ -1067,7 +1067,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveBtnText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
+  saveBtnText: { color: '#0F172A', fontSize: 14, fontWeight: '700' },
   btnRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   settingRow: {
     flexDirection: 'row',

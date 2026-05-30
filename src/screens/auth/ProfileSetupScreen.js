@@ -269,7 +269,7 @@ const ProfileSetupScreen = ({ navigation }) => {
               onPress={() => setWorkoutDaysPerWeek(d)}
               style={[styles.chip, { backgroundColor: isSelected ? COLORS.primary : (isDark ? COLORS.dark.card : COLORS.light.card), borderColor: isSelected ? COLORS.primary : (isDark ? COLORS.dark.border : COLORS.light.border) }]}
               activeOpacity={0.7}>
-              <Text style={[styles.chipText, { color: isSelected ? '#FFF' : colors.text }]}>{d}</Text>
+              <Text style={[styles.chipText, { color: isSelected ? '#0F172A' : colors.text }]}>{d}</Text>
             </TouchableOpacity>
           );
         })}
@@ -285,7 +285,7 @@ const ProfileSetupScreen = ({ navigation }) => {
               onPress={() => setSessionDurationMin(m)}
               style={[styles.chipWide, { backgroundColor: isSelected ? COLORS.primary : (isDark ? COLORS.dark.card : COLORS.light.card), borderColor: isSelected ? COLORS.primary : (isDark ? COLORS.dark.border : COLORS.light.border) }]}
               activeOpacity={0.7}>
-              <Text style={[styles.chipText, { color: isSelected ? '#FFF' : colors.text }]}>{m} min</Text>
+              <Text style={[styles.chipText, { color: isSelected ? '#0F172A' : colors.text }]}>{m} min</Text>
             </TouchableOpacity>
           );
         })}
@@ -348,13 +348,13 @@ const ProfileSetupScreen = ({ navigation }) => {
           <TouchableOpacity style={[styles.nextBtn, { backgroundColor: COLORS.primary, opacity: loading ? 0.7 : 1 }]} onPress={goNext} disabled={loading} activeOpacity={0.85}>
             {loading ? (
               <View style={styles.btnContent}>
-                <InlineSpinner color="#FFF" size={18} />
+                <InlineSpinner color="#0F172A" size={18} />
                 <Text style={styles.nextBtnText}>Saving...</Text>
               </View>
             ) : (
               <View style={styles.btnContent}>
                 <Text style={styles.nextBtnText}>{step === TOTAL_STEPS ? 'Complete Setup' : 'Continue'}</Text>
-                {step < TOTAL_STEPS && <Ionicons name="arrow-forward" size={18} color="#FFF" />}
+                {step < TOTAL_STEPS && <Ionicons name="arrow-forward" size={18} color="#0F172A" />}
               </View>
             )}
           </TouchableOpacity>
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   errorBannerText: { color: '#FFF', fontSize: 13, fontWeight: '500', flex: 1 },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24 },
   nextBtn: { borderRadius: 10, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 8 },
-  nextBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  nextBtnText: { color: '#0F172A', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });
 

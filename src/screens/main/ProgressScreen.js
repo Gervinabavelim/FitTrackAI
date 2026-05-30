@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
   },
-  emptyCTAText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
+  emptyCTAText: { color: '#0F172A', fontSize: 14, fontWeight: '700' },
   insightCard: {
     flexDirection: 'row',
     alignItems: 'center',

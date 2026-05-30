@@ -370,7 +370,7 @@ const LogWorkoutScreen = ({ navigation, route }) => {
                     style={{
                       fontSize: 12,
                       fontWeight: '700',
-                      color: exerciseName === ex.name ? '#FFF' : ex.color,
+                      color: exerciseName === ex.name ? '#0F172A' : ex.color,
                     }}
                   >
                     {ex.name}
@@ -532,7 +532,7 @@ const LogWorkoutScreen = ({ navigation, route }) => {
                   >
                     <Text
                       style={{
-                        color: duration === String(min) ? '#FFF' : COLORS.primary,
+                        color: duration === String(min) ? '#0F172A' : COLORS.primary,
                         fontSize: 12,
                         fontWeight: '700',
                       }}
@@ -651,12 +651,12 @@ const LogWorkoutScreen = ({ navigation, route }) => {
           >
             {loading ? (
               <View style={styles.btnContent}>
-                <InlineSpinner color="#FFF" size={18} />
+                <InlineSpinner color="#0F172A" size={18} />
                 <Text style={styles.saveBtnText}>Saving...</Text>
               </View>
             ) : (
               <View style={styles.btnContent}>
-                <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
+                <Ionicons name="checkmark-circle-outline" size={20} color="#0F172A" />
                 <Text style={styles.saveBtnText}>Save Workout</Text>
               </View>
             )}
@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 8,
   },
-  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  saveBtnText: { color: '#0F172A', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });
 
