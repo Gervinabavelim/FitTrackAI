@@ -43,7 +43,7 @@ import { PRO_FEATURES } from '../../utils/proFeatures';
 const ProfileScreen = ({ navigation }) => {
   const { user, profile, updateProfile, logout, loading } = useAuthStore();
   const { workouts, streak, totalCalories, reset: resetWorkoutStore } = useWorkoutStore();
-  const { isDark, colors, toggleTheme } = useTheme();
+  const { isDark, colors, toggleTheme, isMetric, toggleUnits } = useTheme();
   const haptics = useHaptics();
   const { showToast } = useToast();
   const { isPro, reset: resetSubscriptionStore } = useSubscriptionStore();
@@ -773,6 +773,37 @@ const ProfileScreen = ({ navigation }) => {
               thumbColor={notificationsEnabled ? COLORS.warning : '#999999'}
             />
           </View>
+
+          {/* Units Toggle */}
+          <View style={styles.settingRow}>
+            <View style={[styles.infoIcon, { backgroundColor: `${COLORS.info}18` }]}>
+              <Ionicons name="speedometer-outline" size={16} color={COLORS.info} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {isMetric ? 'Metric (kg/cm)' : 'Imperial (lbs/in)'}
+            </Text>
+            <Switch
+              value={!isMetric}
+              onValueChange={() => { haptics.selection(); toggleUnits(); }}
+              trackColor={{ false: '#E0E0E0', true: `${COLORS.info}60` }}
+              thumbColor={!isMetric ? COLORS.info : '#999999'}
+            />
+          </View>
+
+          {/* Workout History */}
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => { haptics.light(); navigation.navigate(ROUTES.WORKOUT_HISTORY); }}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.infoIcon, { backgroundColor: `${COLORS.success}18` }]}>
+              <Ionicons name="time-outline" size={16} color={COLORS.success} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              Workout History
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
 
           {/* Export Data */}
           <TouchableOpacity

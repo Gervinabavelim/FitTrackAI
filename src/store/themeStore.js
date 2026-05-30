@@ -4,19 +4,25 @@ import { STORAGE_KEYS } from '../utils/constants';
 
 const useThemeStore = create((set, get) => ({
   themePreference: 'dark', // 'system' | 'dark' | 'light'
+  units: 'metric', // 'metric' | 'imperial'
   loaded: false,
 
-  // Load persisted preference from AsyncStorage
+  // Load persisted preferences from AsyncStorage
   loadTheme: async () => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.THEME);
-      if (stored && ['system', 'dark', 'light'].includes(stored)) {
-        set({ themePreference: stored, loaded: true });
-      } else {
-        set({ loaded: true });
+      const [storedTheme, storedUnits] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEYS.THEME),
+        AsyncStorage.getItem(STORAGE_KEYS.UNITS),
+      ]);
+      const updates = { loaded: true };
+      if (storedTheme && ['system', 'dark', 'light'].includes(storedTheme)) {
+        updates.themePreference = storedTheme;
       }
+      if (storedUnits && ['metric', 'imperial'].includes(storedUnits)) {
+        updates.units = storedUnits;
+      }
+      set(updates);
     } catch (error) {
-      // Failed to load theme, using default
       set({ loaded: true });
     }
   },
@@ -40,6 +46,17 @@ const useThemeStore = create((set, get) => ({
       await AsyncStorage.setItem(STORAGE_KEYS.THEME, preference);
     } catch (error) {
       // Failed to persist theme
+    }
+  },
+
+  // Toggle units between metric and imperial
+  toggleUnits: async () => {
+    const newUnits = get().units === 'metric' ? 'imperial' : 'metric';
+    set({ units: newUnits });
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.UNITS, newUnits);
+    } catch (error) {
+      // Failed to persist units
     }
   },
 }));

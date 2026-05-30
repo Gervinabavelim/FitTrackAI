@@ -11,6 +11,8 @@ import MainNavigator from './MainNavigator';
 import PaywallScreen from '../screens/main/PaywallScreen';
 import ContactScreen from '../screens/main/ContactScreen';
 import SocialScreen from '../screens/main/SocialScreen';
+import WorkoutHistoryScreen from '../screens/main/WorkoutHistoryScreen';
+import WorkoutDetailScreen from '../screens/main/WorkoutDetailScreen';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import useTheme from '../hooks/useTheme';
 import { COLORS, ROUTES, STORAGE_KEYS } from '../utils/constants';
@@ -36,6 +38,16 @@ const MainWithPaywall = () => (
     <RootStack.Screen
       name={ROUTES.SOCIAL}
       component={SocialScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <RootStack.Screen
+      name={ROUTES.WORKOUT_HISTORY}
+      component={WorkoutHistoryScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <RootStack.Screen
+      name={ROUTES.WORKOUT_DETAIL}
+      component={WorkoutDetailScreen}
       options={{ animation: 'slide_from_right' }}
     />
   </RootStack.Navigator>

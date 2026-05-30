@@ -397,7 +397,7 @@ const DashboardScreen = ({ navigation }) => {
                   key={workout.id}
                   workout={workout}
                   onDelete={handleDeleteWorkout}
-                  onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT, { editWorkout: workout })}
+                  onPress={() => navigation.navigate(ROUTES.WORKOUT_DETAIL, { workout })}
                   compact
                   delay={i * 60}
                 />
@@ -418,7 +418,7 @@ const DashboardScreen = ({ navigation }) => {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Recent</Text>
-                <TouchableOpacity onPress={() => navigation.navigate(ROUTES.PROGRESS)}>
+                <TouchableOpacity onPress={() => navigation.navigate(ROUTES.WORKOUT_HISTORY)}>
                   <Text style={[styles.viewAllText, { color: COLORS.primary }]}>View all</Text>
                 </TouchableOpacity>
               </View>
@@ -427,7 +427,7 @@ const DashboardScreen = ({ navigation }) => {
                   key={workout.id}
                   workout={workout}
                   onDelete={handleDeleteWorkout}
-                  onPress={() => navigation.navigate(ROUTES.LOG_WORKOUT, { editWorkout: workout })}
+                  onPress={() => navigation.navigate(ROUTES.WORKOUT_DETAIL, { workout })}
                   compact
                   delay={i * 50}
                 />

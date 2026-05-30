@@ -226,6 +226,8 @@ export const ROUTES = {
   PAYWALL: 'Paywall',
   CONTACT: 'Contact',
   SOCIAL: 'Social',
+  WORKOUT_HISTORY: 'WorkoutHistory',
+  WORKOUT_DETAIL: 'WorkoutDetail',
 };
 
 // ─── Storage Keys ─────────────────────────────────────────────────────────────
@@ -233,6 +235,7 @@ export const STORAGE_KEYS = {
   THEME: '@fittrack_theme',
   NOTIFICATIONS_ENABLED: '@fittrack_notifications',
   ONBOARDING_COMPLETE: '@fittrack_onboarding',
+  UNITS: '@fittrack_units',
 };
 
 // ─── Days of Week ─────────────────────────────────────────────────────────────

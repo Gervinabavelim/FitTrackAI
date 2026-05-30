@@ -12,7 +12,7 @@ import { COLORS } from '../utils/constants';
  */
 const useTheme = () => {
   const systemColorScheme = useColorScheme(); // 'dark' | 'light' | null
-  const { themePreference, loaded, loadTheme, toggleTheme: storeToggle, setTheme } = useThemeStore();
+  const { themePreference, units, loaded, loadTheme, toggleTheme: storeToggle, setTheme, toggleUnits } = useThemeStore();
 
   // Load persisted preference once on first mount
   useEffect(() => {
@@ -35,6 +35,8 @@ const useTheme = () => {
   // Toggle wraps store method with current isDark value
   const toggleTheme = () => storeToggle(isDark);
 
+  const isMetric = units === 'metric';
+
   return {
     isDark,
     theme: isDark ? 'dark' : 'light',
@@ -43,6 +45,9 @@ const useTheme = () => {
     primaryColors: COLORS,
     toggleTheme,
     setTheme,
+    units,
+    isMetric,
+    toggleUnits,
     loaded,
   };
 };
