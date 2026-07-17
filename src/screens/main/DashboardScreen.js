@@ -245,8 +245,8 @@ const DashboardScreen = ({ navigation }) => {
                     stroke={13}
                     gap={6}
                     rings={[
-                      { value: goalProgress, color: COLORS.primary },
-                      { value: streakProgress, color: '#FF7A59' },
+                      { value: goalProgress, gradient: ['#5B5FE8', '#22C55E'] },
+                      { value: streakProgress, gradient: ['#FF7A59', '#FBBF24'] },
                     ]}
                   >
                     <View style={{ alignItems: 'center' }}>

@@ -99,33 +99,34 @@ const WorkoutCard = ({ workout, onDelete, onPress, compact = false, delay = 0 })
             },
           ]}
         >
-          <View style={[styles.accentBar, { backgroundColor: categoryColor }]} />
+          {/* Category thumbnail */}
+          <View style={[styles.thumb, { backgroundColor: `${categoryColor}18` }]}>
+            <Ionicons name={getExerciseIcon(workout.exerciseName)} size={22} color={categoryColor} />
+          </View>
 
-          <View style={styles.compactContent}>
-            <View style={styles.compactLeft}>
-              <Text
-                style={[styles.exerciseName, { color: colors.text, fontSize: 15 }]}
-                numberOfLines={1}
-              >
-                {workout.exerciseName || 'Workout'}
-              </Text>
+          <View style={styles.compactLeft}>
+            <Text
+              style={[styles.exerciseName, { color: colors.text, fontSize: 15 }]}
+              numberOfLines={1}
+            >
+              {workout.exerciseName || 'Workout'}
+            </Text>
+            <View style={styles.compactMeta}>
               <Text style={[styles.dateText, { color: colors.textMuted }]}>
                 {formattedDate}
               </Text>
-            </View>
-
-            <View style={styles.compactStats}>
-              {workout.sets && workout.reps && (
-                <Text style={[styles.statChip, { backgroundColor: `${categoryColor}12`, color: categoryColor }]}>
-                  {workout.sets}x{workout.reps}
-                </Text>
-              )}
+              {workout.sets && workout.reps ? (
+                <Text style={[styles.metaDot, { color: colors.textMuted }]}>·  {workout.sets}×{workout.reps}</Text>
+              ) : null}
               {workout.calories ? (
-                <Text style={[styles.calorieText, { color: colors.textSecondary }]}>
-                  {workout.calories} kcal
-                </Text>
+                <Text style={[styles.metaDot, { color: colors.textMuted }]}>·  {workout.calories} kcal</Text>
               ) : null}
             </View>
+          </View>
+
+          {/* Circular action button (echoes the reference's play button) */}
+          <View style={[styles.playBtn, { backgroundColor: `${categoryColor}12` }]}>
+            <Ionicons name="chevron-forward" size={16} color={categoryColor} />
           </View>
         </Animated.View>
       </TouchableOpacity>
@@ -319,43 +320,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   compactCard: {
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: 8,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    overflow: 'hidden',
+    padding: 12,
+    gap: 12,
   },
-  accentBar: {
-    width: 4,
-    alignSelf: 'stretch',
-  },
-  compactContent: {
-    flex: 1,
-    flexDirection: 'row',
+  thumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 14,
+    justifyContent: 'center',
   },
   compactLeft: {
     flex: 1,
   },
-  compactStats: {
+  compactMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    flexWrap: 'wrap',
+    marginTop: 2,
+    gap: 4,
   },
-  statChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+  metaDot: {
     fontSize: 12,
-    fontWeight: '600',
-    overflow: 'hidden',
-  },
-  calorieText: {
-    fontSize: 13,
     fontWeight: '500',
+  },
+  playBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
