@@ -138,7 +138,7 @@ const LoginScreen = ({ navigation }) => {
           {/* Hero */}
           <Animated.View style={[styles.heroSection, { opacity: heroOpacity, transform: [{ translateY: heroTranslateY }] }]}>
             <View style={[styles.logoContainer, { backgroundColor: COLORS.primary }]}>
-              <Ionicons name="flash" size={32} color="#0F172A" />
+              <Ionicons name="flash" size={32} color="#FFF" />
             </View>
             <Text style={[styles.appName, { color: colors.text }]}>FitTrack AI</Text>
             <Text style={[styles.tagline, { color: colors.textSecondary }]}>Your AI-powered fitness companion</Text>
@@ -307,7 +307,7 @@ const LoginScreen = ({ navigation }) => {
                   >
                     {loading ? (
                       <View style={styles.btnContent}>
-                        <InlineSpinner color="#0F172A" size={18} />
+                        <InlineSpinner color="#FFF" size={18} />
                         <Text style={styles.signInBtnText}>Signing in...</Text>
                       </View>
                     ) : (
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  signInBtnText: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
+  signInBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 
   // Footer

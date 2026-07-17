@@ -160,7 +160,7 @@ const WorkoutHistoryScreen = ({ navigation }) => {
               },
             ]}
           >
-            <Text style={{ color: activeFilter === f.key ? '#0F172A' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
+            <Text style={{ color: activeFilter === f.key ? '#FFF' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
               {f.label}
             </Text>
           </TouchableOpacity>

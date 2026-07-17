@@ -460,7 +460,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.fitnessLevel === level.value ? '#0F172A' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
+                  <Text style={{ color: editData.fitnessLevel === level.value ? '#FFF' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
                     {level.label}
                   </Text>
                 </TouchableOpacity>
@@ -484,7 +484,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.fitnessGoal === goal.value ? '#0F172A' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
+                  <Text style={{ color: editData.fitnessGoal === goal.value ? '#FFF' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
                     {goal.label}
                   </Text>
                 </TouchableOpacity>
@@ -508,7 +508,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.workoutLocation === loc.value ? '#0F172A' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
+                  <Text style={{ color: editData.workoutLocation === loc.value ? '#FFF' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
                     {loc.label}
                   </Text>
                 </TouchableOpacity>
@@ -532,7 +532,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.workoutDaysPerWeek === d ? '#0F172A' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
+                  <Text style={{ color: editData.workoutDaysPerWeek === d ? '#FFF' : COLORS.primary, fontSize: 13, fontWeight: '600' }}>
                     {d}
                   </Text>
                 </TouchableOpacity>
@@ -556,7 +556,7 @@ const ProfileScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  <Text style={{ color: editData.sessionDurationMin === m ? '#0F172A' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
+                  <Text style={{ color: editData.sessionDurationMin === m ? '#FFF' : COLORS.primary, fontSize: 12, fontWeight: '600' }}>
                     {m} min
                   </Text>
                 </TouchableOpacity>
@@ -600,7 +600,7 @@ const ProfileScreen = ({ navigation }) => {
               >
                 {loading ? (
                   <View style={styles.btnRow}>
-                    <InlineSpinner color="#0F172A" size={16} />
+                    <InlineSpinner color="#FFF" size={16} />
                     <Text style={styles.saveBtnText}>Saving...</Text>
                   </View>
                 ) : (
@@ -839,7 +839,7 @@ const ProfileScreen = ({ navigation }) => {
               {isPro ? 'Manage Subscription' : 'Upgrade to Pro'}
             </Text>
             {!isPro && (
-              <View style={{ backgroundColor: `${COLORS.primary}15`, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
+              <View style={{ backgroundColor: `${COLORS.primary}15`, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
                 <Text style={{ color: COLORS.primary, fontSize: 11, fontWeight: '700' }}>Unlock All</Text>
               </View>
             )}
@@ -892,7 +892,7 @@ const ProfileScreen = ({ navigation }) => {
           FitTrack AI v1.0.0
         </Text>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -915,14 +915,14 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 6,
+    borderRadius: 20,
   },
   editBtnText: { fontSize: 13, fontWeight: '700' },
   avatarSection: { alignItems: 'center', paddingBottom: 24 },
   avatar: {
     width: 96,
     height: 96,
-    borderRadius: 12,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -932,7 +932,7 @@ const styles = StyleSheet.create({
   avatarImage: {
     width: 96,
     height: 96,
-    borderRadius: 12,
+    borderRadius: 28,
     borderWidth: 3,
     borderColor: COLORS.primary,
     marginBottom: 12,
@@ -961,8 +961,8 @@ const styles = StyleSheet.create({
   goalBadge: {
     marginTop: 10,
     paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingVertical: 7,
+    borderRadius: 20,
   },
   goalBadgeText: { fontSize: 13, fontWeight: '600' },
   statsRow: {
@@ -972,10 +972,15 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 20,
     borderWidth: 1,
-    padding: 14,
+    padding: 16,
     alignItems: 'center',
+    shadowColor: '#1A1A2E',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    elevation: 2,
   },
   statValue: { fontSize: 20, fontWeight: '800' },
   statLabel: {
@@ -987,10 +992,15 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     marginHorizontal: 20,
-    borderRadius: 14,
+    borderRadius: 22,
     borderWidth: 1,
-    padding: 16,
+    padding: 18,
     marginBottom: 16,
+    shadowColor: '#1A1A2E',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 2,
   },
   sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 14 },
   infoRow: {
@@ -1000,9 +1010,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   infoIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1010,7 +1020,7 @@ const styles = StyleSheet.create({
   infoValue: { fontSize: 14, fontWeight: '700' },
   bmiRow: {
     marginTop: 8,
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     padding: 14,
   },
@@ -1060,10 +1070,15 @@ const styles = StyleSheet.create({
   idealWeight: { fontSize: 12, marginTop: 8, textAlign: 'center' },
   editCard: {
     marginHorizontal: 20,
-    borderRadius: 14,
+    borderRadius: 22,
     borderWidth: 1,
-    padding: 16,
+    padding: 18,
     marginBottom: 16,
+    shadowColor: '#1A1A2E',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 2,
   },
   editField: { marginBottom: 14 },
   editLabel: {
@@ -1076,29 +1091,29 @@ const styles = StyleSheet.create({
   fieldError: { color: COLORS.danger, fontSize: 12, marginTop: 4, fontWeight: '500' },
   selectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   selectorChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 6,
+    paddingHorizontal: 15,
+    paddingVertical: 9,
+    borderRadius: 20,
     borderWidth: 1.5,
   },
   editActions: { flexDirection: 'row', gap: 12, marginTop: 16 },
   cancelBtn: {
     flex: 1,
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1.5,
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: 'center',
   },
   cancelBtnText: { fontSize: 14, fontWeight: '600' },
   saveBtn: {
     flex: 1,
-    borderRadius: 8,
+    borderRadius: 14,
     backgroundColor: COLORS.primary,
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveBtnText: { color: '#0F172A', fontSize: 14, fontWeight: '700' },
+  saveBtnText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
   btnRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   settingRow: {
     flexDirection: 'row',
@@ -1109,7 +1124,7 @@ const styles = StyleSheet.create({
   settingLabel: { flex: 1, fontSize: 15, fontWeight: '500' },
   logoutBtn: {
     marginHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: `${COLORS.danger}40`,
     backgroundColor: `${COLORS.danger}08`,

@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   ctaText: {
-    color: '#0F172A',
+    color: '#FFF',
     fontWeight: '700',
     fontSize: 15,
   },

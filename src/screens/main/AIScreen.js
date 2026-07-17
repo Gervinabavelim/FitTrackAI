@@ -408,7 +408,7 @@ const AIScreen = ({ navigation }) => {
                 </Text>
               </View>
             </View>
-            <View style={{ height: 100 }} />
+            <View style={{ height: 120 }} />
           </>
         )}
 
@@ -448,7 +448,7 @@ const AIScreen = ({ navigation }) => {
             activeOpacity={0.85}
           >
             <View style={styles.generateGradient}>
-              <Ionicons name="sparkles" size={22} color="#0F172A" />
+              <Ionicons name="sparkles" size={22} color="#FFF" />
               <Text style={styles.generateBtnText}>
                 {cooldownSeconds > 0
                   ? `Wait ${cooldownSeconds}s`
@@ -604,7 +604,7 @@ const AIScreen = ({ navigation }) => {
             >
               {saving ? (
                 <View style={styles.btnContent}>
-                  <InlineSpinner color="#0F172A" size={18} />
+                  <InlineSpinner color="#FFF" size={18} />
                   <Text style={styles.saveBtnText}>Saving...</Text>
                 </View>
               ) : (
@@ -612,7 +612,7 @@ const AIScreen = ({ navigation }) => {
                   <Ionicons
                     name={planSaved ? 'checkmark-circle' : 'bookmark-outline'}
                     size={20}
-                    color="#0F172A"
+                    color="#FFF"
                   />
                   <Text style={styles.saveBtnText}>
                     {planSaved ? 'Plan Saved' : 'Save This Plan'}
@@ -702,7 +702,7 @@ const AIScreen = ({ navigation }) => {
           </View>
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
         </>
         )}
       </ScrollView>
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 6,
+    borderRadius: 20,
   },
   aiBadgeText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
   contextPill: {
@@ -737,17 +737,22 @@ const styles = StyleSheet.create({
     gap: 8,
     marginHorizontal: 20,
     marginBottom: 16,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 12,
+    padding: 14,
     flexWrap: 'wrap',
   },
   contextText: { fontSize: 12, fontWeight: '500' },
   generateBtn: {
     marginHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 18,
     overflow: 'hidden',
     marginBottom: 20,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 4,
   },
   generateGradient: {
     backgroundColor: COLORS.primary,
@@ -757,10 +762,10 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     gap: 10,
   },
-  generateBtnText: { color: '#0F172A', fontSize: 17, fontWeight: '700' },
+  generateBtnText: { color: '#FFF', fontSize: 17, fontWeight: '700' },
   loadingCard: {
     marginHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 22,
     borderWidth: 1,
     padding: 24,
     marginBottom: 20,
@@ -770,7 +775,7 @@ const styles = StyleSheet.create({
   },
   planContainer: { paddingHorizontal: 20 },
   planHeader: {
-    borderRadius: 10,
+    borderRadius: 22,
     borderWidth: 1,
     padding: 20,
     marginBottom: 20,
@@ -796,7 +801,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   dayCard: {
-    borderRadius: 10,
+    borderRadius: 18,
     borderWidth: 1.5,
     marginBottom: 12,
     overflow: 'hidden',
@@ -882,7 +887,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   tipsCard: {
-    borderRadius: 10,
+    borderRadius: 18,
     borderWidth: 1,
     padding: 16,
     marginBottom: 12,
@@ -919,13 +924,13 @@ const styles = StyleSheet.create({
   },
   progressionText: { fontSize: 13, lineHeight: 20, flex: 1, fontWeight: '500' },
   saveBtn: {
-    borderRadius: 8,
+    borderRadius: 18,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  saveBtnText: { color: '#0F172A', fontSize: 16, fontWeight: '700' },
+  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   emptyState: {
     alignItems: 'center',
@@ -959,9 +964,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   savedPlanCard: {
-    borderRadius: 10,
+    borderRadius: 18,
     borderWidth: 1,
-    padding: 14,
+    padding: 16,
     marginBottom: 10,
   },
   savedPlanHeader: {

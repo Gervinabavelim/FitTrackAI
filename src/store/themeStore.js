@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../utils/constants';
 
 const useThemeStore = create((set, get) => ({
-  themePreference: 'dark', // 'system' | 'dark' | 'light'
+  themePreference: 'light', // 'system' | 'dark' | 'light'
   units: 'metric', // 'metric' | 'imperial'
   loaded: false,
 

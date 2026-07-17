@@ -1,93 +1,140 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DashboardScreen from '../screens/main/DashboardScreen';
 import LogWorkoutScreen from '../screens/main/LogWorkoutScreen';
 import AIScreen from '../screens/main/AIScreen';
 import ProgressScreen from '../screens/main/ProgressScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
-import useTheme from '../hooks/useTheme';
 import useWorkoutStore from '../store/workoutStore';
 import { COLORS, ROUTES } from '../utils/constants';
 
 const Tab = createBottomTabNavigator();
 
-const MainNavigator = () => {
-  const { isDark, colors } = useTheme();
+// ─── Per-route icon + label config ──────────────────────────────────────────────
+const TAB_META = {
+  [ROUTES.DASHBOARD]: { label: 'Home', icon: 'home', iconOutline: 'home-outline' },
+  [ROUTES.PROGRESS]: { label: 'Progress', icon: 'bar-chart', iconOutline: 'bar-chart-outline' },
+  [ROUTES.LOG_WORKOUT]: { label: 'Log', icon: 'add-circle', iconOutline: 'add-circle-outline' },
+  [ROUTES.AI_SUGGESTIONS]: { label: 'AI', icon: 'sparkles', iconOutline: 'sparkles-outline' },
+  [ROUTES.PROFILE]: { label: 'Profile', icon: 'person', iconOutline: 'person-outline' },
+};
+
+// ─── Dark floating pill tab bar ─────────────────────────────────────────────────
+const FloatingTabBar = ({ state, navigation }) => {
+  const insets = useSafeAreaInsets();
   const { streak } = useWorkoutStore();
 
   return (
-    <Tab.Navigator
-      initialRouteName={ROUTES.DASHBOARD}
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: isDark ? 'rgba(22,22,22,0.85)' : 'rgba(255,255,255,0.85)',
-          borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-          borderTopWidth: StyleSheet.hairlineWidth,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 64,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-        tabBarBackground: () => (
-          <BlurView
-            tint={isDark ? 'dark' : 'light'}
-            intensity={80}
-            style={StyleSheet.absoluteFill}
-          />
-        ),
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: isDark ? '#666' : '#999',
-        tabBarShowLabel: true,
-        tabBarHideOnKeyboard: true,
-        tabBarIcon: ({ focused, color }) => {
-          const icons = {
-            [ROUTES.DASHBOARD]: focused ? 'home' : 'home-outline',
-            [ROUTES.LOG_WORKOUT]: focused ? 'add-circle' : 'add-circle-outline',
-            [ROUTES.AI_SUGGESTIONS]: focused ? 'sparkles' : 'sparkles-outline',
-            [ROUTES.PROGRESS]: focused ? 'bar-chart' : 'bar-chart-outline',
-            [ROUTES.PROFILE]: focused ? 'person' : 'person-outline',
+    <View style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 12) }]} pointerEvents="box-none">
+      <View style={styles.bar}>
+        {state.routes.map((route, index) => {
+          const meta = TAB_META[route.name] || { label: route.name, icon: 'ellipse', iconOutline: 'ellipse-outline' };
+          const focused = state.index === index;
+
+          const onPress = () => {
+            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            if (!focused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
           };
 
-          const iconName = icons[route.name] || 'ellipse';
-          return <Ionicons name={iconName} size={22} color={color} />;
-        },
-        tabBarLabel: ({ focused, color }) => {
-          const labels = {
-            [ROUTES.DASHBOARD]: 'Home',
-            [ROUTES.LOG_WORKOUT]: 'Log',
-            [ROUTES.AI_SUGGESTIONS]: 'AI Plan',
-            [ROUTES.PROGRESS]: 'Progress',
-            [ROUTES.PROFILE]: 'Profile',
-          };
+          const showStreak = route.name === ROUTES.DASHBOARD && streak > 0;
 
           return (
-            <Text style={{ fontSize: 10, fontWeight: focused ? '600' : '400', color, marginTop: 2 }}>
-              {labels[route.name] || route.name}
-            </Text>
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={focused ? { selected: true } : {}}
+              accessibilityLabel={meta.label}
+              onPress={onPress}
+              activeOpacity={0.85}
+              style={[styles.item, focused && styles.itemActive]}
+            >
+              <View>
+                <Ionicons
+                  name={focused ? meta.icon : meta.iconOutline}
+                  size={22}
+                  color={focused ? COLORS.primary : '#8A8A93'}
+                />
+                {showStreak && !focused && <View style={styles.dot} />}
+              </View>
+              {focused && <Text style={styles.itemLabel}>{meta.label}</Text>}
+            </TouchableOpacity>
           );
-        },
-      })}
-    >
-      <Tab.Screen
-        name={ROUTES.DASHBOARD}
-        component={DashboardScreen}
-        options={{
-          tabBarBadge: streak > 0 ? streak : undefined,
-          tabBarBadgeStyle: streak > 0 ? { backgroundColor: COLORS.primary, color: '#FFF', fontSize: 10, fontWeight: '700', minWidth: 18, height: 18, lineHeight: 18, borderRadius: 9 } : undefined,
-        }}
-      />
-      <Tab.Screen name={ROUTES.PROGRESS} component={ProgressScreen} />
-      <Tab.Screen name={ROUTES.LOG_WORKOUT} component={LogWorkoutScreen} />
-      <Tab.Screen name={ROUTES.AI_SUGGESTIONS} component={AIScreen} />
-      <Tab.Screen name={ROUTES.PROFILE} component={ProfileScreen} />
-    </Tab.Navigator>
+        })}
+      </View>
+    </View>
   );
 };
+
+const MainNavigator = () => (
+  <Tab.Navigator
+    initialRouteName={ROUTES.DASHBOARD}
+    screenOptions={{ headerShown: false }}
+    tabBar={(props) => <FloatingTabBar {...props} />}
+  >
+    <Tab.Screen name={ROUTES.DASHBOARD} component={DashboardScreen} />
+    <Tab.Screen name={ROUTES.PROGRESS} component={ProgressScreen} />
+    <Tab.Screen name={ROUTES.LOG_WORKOUT} component={LogWorkoutScreen} />
+    <Tab.Screen name={ROUTES.AI_SUGGESTIONS} component={AIScreen} />
+    <Tab.Screen name={ROUTES.PROFILE} component={ProfileScreen} />
+  </Tab.Navigator>
+);
+
+const styles = StyleSheet.create({
+  wrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#17171C',
+    borderRadius: 30,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 46,
+    paddingHorizontal: 14,
+    borderRadius: 23,
+  },
+  itemActive: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 18,
+  },
+  itemLabel: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+    letterSpacing: -0.2,
+  },
+  dot: {
+    position: 'absolute',
+    top: -2,
+    right: -3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF7A59',
+  },
+});
 
 export default MainNavigator;

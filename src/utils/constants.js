@@ -34,7 +34,7 @@ export const WORKOUT_FREQUENCIES = [1, 2, 3, 4, 5, 6, 7];
 export const EXERCISE_CATEGORIES = {
   strength: {
     label: 'Strength Training',
-    color: '#3B82F6',
+    color: '#5B5FE8',
     exercises: [
       'Bench Press',
       'Squat',
@@ -70,7 +70,7 @@ export const EXERCISE_CATEGORIES = {
   },
   cardio: {
     label: 'Cardio',
-    color: '#FBBF24',
+    color: '#FF7A59',
     exercises: [
       'Running',
       'Cycling',
@@ -140,9 +140,9 @@ export const ALL_EXERCISES = Object.values(EXERCISE_CATEGORIES).flatMap(
 
 // ─── Color Themes ──────────────────────────────────────────────────────────────
 export const COLORS = {
-  primary: '#F97316',
-  primaryLight: '#FB923C',
-  primaryDark: '#EA580C',
+  primary: '#5B5FE8',
+  primaryLight: '#7C80F0',
+  primaryDark: '#4145C9',
   success: '#22C55E',
   warning: '#FBBF24',
   danger: '#EF4444',
@@ -161,18 +161,18 @@ export const COLORS = {
   },
 
   light: {
-    background: '#F8FAFC',
+    background: '#F1F0EC',
     card: '#FFFFFF',
-    cardSecondary: '#F1F5F9',
-    border: '#E2E8F0',
-    text: '#0F172A',
-    textSecondary: '#475569',
-    textMuted: '#94A3B8',
-    inputBg: '#F1F5F9',
+    cardSecondary: '#F5F4F0',
+    border: '#E7E6E1',
+    text: '#1A1A1A',
+    textSecondary: '#6B6B72',
+    textMuted: '#A0A0A8',
+    inputBg: '#F5F4F0',
     statusBar: 'dark',
   },
 
-  chart: ['#F97316', '#3B82F6', '#FBBF24', '#EF4444', '#A78BFA', '#22C55E'],
+  chart: ['#5B5FE8', '#FF7A59', '#22C55E', '#FBBF24', '#A78BFA', '#3B82F6'],
 };
 
 // ─── MET Values for Calorie Calculation ────────────────────────────────────────

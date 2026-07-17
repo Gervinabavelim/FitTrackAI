@@ -231,12 +231,12 @@ const LogWorkoutScreen = ({ navigation, route }) => {
 
   const inputStyle = (field) => ({
     flex: 1,
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1.5,
     borderColor: errors[field] ? COLORS.danger : (isDark ? COLORS.dark.border : COLORS.light.border),
     backgroundColor: isDark ? COLORS.dark.inputBg : COLORS.light.inputBg,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     color: colors.text,
     fontSize: 16,
   });
@@ -340,14 +340,14 @@ const LogWorkoutScreen = ({ navigation, route }) => {
               contentContainerStyle={styles.quickPickRow}
             >
               {[
-                { name: 'Running', icon: 'walk-outline', color: '#FBBF24' },
-                { name: 'Bench Press', icon: 'barbell-outline', color: '#3B82F6' },
-                { name: 'Squat', icon: 'fitness-outline', color: '#3B82F6' },
+                { name: 'Running', icon: 'walk-outline', color: '#FF7A59' },
+                { name: 'Bench Press', icon: 'barbell-outline', color: '#5B5FE8' },
+                { name: 'Squat', icon: 'fitness-outline', color: '#5B5FE8' },
                 { name: 'Push-up', icon: 'body-outline', color: '#22C55E' },
-                { name: 'Cycling', icon: 'bicycle-outline', color: '#FBBF24' },
+                { name: 'Cycling', icon: 'bicycle-outline', color: '#FF7A59' },
                 { name: 'HIIT', icon: 'flash-outline', color: '#EF4444' },
                 { name: 'Yoga', icon: 'leaf-outline', color: '#A78BFA' },
-                { name: 'Deadlift', icon: 'barbell-outline', color: '#3B82F6' },
+                { name: 'Deadlift', icon: 'barbell-outline', color: '#5B5FE8' },
               ].map((ex) => (
                 <TouchableOpacity
                   key={ex.name}
@@ -370,7 +370,7 @@ const LogWorkoutScreen = ({ navigation, route }) => {
                     style={{
                       fontSize: 12,
                       fontWeight: '700',
-                      color: exerciseName === ex.name ? '#0F172A' : ex.color,
+                      color: exerciseName === ex.name ? '#FFF' : ex.color,
                     }}
                   >
                     {ex.name}
@@ -532,7 +532,7 @@ const LogWorkoutScreen = ({ navigation, route }) => {
                   >
                     <Text
                       style={{
-                        color: duration === String(min) ? '#0F172A' : COLORS.primary,
+                        color: duration === String(min) ? '#FFF' : COLORS.primary,
                         fontSize: 12,
                         fontWeight: '700',
                       }}
@@ -651,18 +651,18 @@ const LogWorkoutScreen = ({ navigation, route }) => {
           >
             {loading ? (
               <View style={styles.btnContent}>
-                <InlineSpinner color="#0F172A" size={18} />
+                <InlineSpinner color="#FFF" size={18} />
                 <Text style={styles.saveBtnText}>Saving...</Text>
               </View>
             ) : (
               <View style={styles.btnContent}>
-                <Ionicons name="checkmark-circle-outline" size={20} color="#0F172A" />
+                <Ionicons name="checkmark-circle-outline" size={20} color="#FFF" />
                 <Text style={styles.saveBtnText}>Save Workout</Text>
               </View>
             )}
           </TouchableOpacity>
 
-          <View style={{ height: 100 }} />
+          <View style={{ height: 120 }} />
         </Animated.ScrollView>
       </KeyboardAvoidingView>
 
@@ -690,10 +690,10 @@ const styles = StyleSheet.create({
   clearText: { fontSize: 14, fontWeight: '600' },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 24 },
   recentCard: {
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     marginRight: 8,
     minWidth: 110,
   },
@@ -716,18 +716,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 20,
     borderWidth: 1,
   },
   exercisePickerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1.5,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
     gap: 10,
   },
   exercisePickerText: { flex: 1, fontSize: 16, fontWeight: '400' },
@@ -735,7 +735,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -749,9 +749,9 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   durationChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
   },
   caloriesHeader: {
     flexDirection: 'row',
@@ -764,17 +764,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 14,
-    borderRadius: 8,
+    borderRadius: 14,
   },
   fieldError: { color: COLORS.danger, fontSize: 12, marginTop: 6, fontWeight: '500' },
   saveBtn: {
-    borderRadius: 8,
-    paddingVertical: 16,
+    borderRadius: 18,
+    paddingVertical: 17,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  saveBtnText: { color: '#0F172A', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   btnContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });
 

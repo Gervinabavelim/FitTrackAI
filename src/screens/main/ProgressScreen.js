@@ -278,7 +278,7 @@ const ProgressScreen = ({ navigation }) => {
                 styles.summaryCard,
                 {
                   backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-                  borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
+                  borderColor: isDark ? COLORS.dark.border : 'transparent',
                 },
               ]}
             >
@@ -354,7 +354,7 @@ const ProgressScreen = ({ navigation }) => {
                       styles.chartCard,
                       {
                         backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-                        borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
+                        borderColor: isDark ? COLORS.dark.border : 'transparent',
                       },
                     ]}
                   >
@@ -387,7 +387,7 @@ const ProgressScreen = ({ navigation }) => {
                       styles.chartCard,
                       {
                         backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-                        borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
+                        borderColor: isDark ? COLORS.dark.border : 'transparent',
                       },
                     ]}
                   >
@@ -420,7 +420,7 @@ const ProgressScreen = ({ navigation }) => {
                         styles.chartCard,
                         {
                           backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-                          borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
+                          borderColor: isDark ? COLORS.dark.border : 'transparent',
                         },
                       ]}
                     >
@@ -450,7 +450,7 @@ const ProgressScreen = ({ navigation }) => {
                         styles.emptyChartCard,
                         {
                           backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-                          borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
+                          borderColor: isDark ? COLORS.dark.border : 'transparent',
                         },
                       ]}
                     >
@@ -489,7 +489,7 @@ const ProgressScreen = ({ navigation }) => {
                   styles.summaryCard,
                   {
                     backgroundColor: isDark ? COLORS.dark.card : COLORS.light.card,
-                    borderColor: isDark ? COLORS.dark.border : COLORS.light.border,
+                    borderColor: isDark ? COLORS.dark.border : 'transparent',
                   },
                 ]}
               >
@@ -543,7 +543,7 @@ const ProgressScreen = ({ navigation }) => {
               />
             )}
 
-            <View style={{ height: 100 }} />
+            <View style={{ height: 120 }} />
           </Animated.View>
         )}
       </ScrollView>
@@ -567,10 +567,15 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     marginHorizontal: 20,
-    borderRadius: 14,
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 20,
     marginBottom: 20,
+    shadowColor: '#1A1A2E',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 2,
   },
   summaryTitle: {
     fontSize: 14,
@@ -600,10 +605,15 @@ const styles = StyleSheet.create({
   },
   chartCard: {
     marginHorizontal: 20,
-    borderRadius: 14,
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
     overflow: 'hidden',
+    shadowColor: '#1A1A2E',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    elevation: 2,
   },
   chart: { borderRadius: 10 },
   emptyChartCard: {
@@ -628,13 +638,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
   },
-  emptyCTAText: { color: '#0F172A', fontSize: 14, fontWeight: '700' },
+  emptyCTAText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
   insightCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     marginHorizontal: 20,
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
     marginBottom: 20,

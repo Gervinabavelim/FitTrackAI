@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
   },
-  startText: { color: '#0F172A', fontSize: 14, fontWeight: '700' },
+  startText: { color: '#FFF', fontSize: 14, fontWeight: '700' },
 });
 
 export default RestTimer;

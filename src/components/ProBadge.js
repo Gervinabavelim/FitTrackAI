@@ -60,7 +60,7 @@ export const ProLockOverlay = ({ navigation, feature, message, colors, isDark })
       onPress={() => navigation.navigate('Paywall', { feature })}
       activeOpacity={0.85}
     >
-      <Ionicons name="diamond" size={16} color="#0F172A" />
+      <Ionicons name="diamond" size={16} color="#FFF" />
       <Text style={styles.upgradeBtnText}>Upgrade to Pro</Text>
     </TouchableOpacity>
   </View>
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   upgradeBtnText: {
-    color: '#0F172A',
+    color: '#FFF',
     fontSize: 15,
     fontWeight: '700',
   },
