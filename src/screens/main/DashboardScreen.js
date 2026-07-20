@@ -145,6 +145,16 @@ const DashboardScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]} edges={['top']}>
+      {/* Soft gradient glow behind the header (borrowed from the reference's top fade) */}
+      <LinearGradient
+        colors={
+          isDark
+            ? ['rgba(91,95,232,0.22)', 'rgba(91,95,232,0)']
+            : ['rgba(124,128,240,0.20)', 'rgba(241,240,236,0)']
+        }
+        style={styles.topGlow}
+        pointerEvents="none"
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 110 }}
@@ -250,6 +260,9 @@ const DashboardScreen = ({ navigation }) => {
                     ]}
                   >
                     <View style={{ alignItems: 'center' }}>
+                      <View style={styles.ringBadge}>
+                        <Ionicons name="barbell" size={15} color="#FFF" />
+                      </View>
                       <Text style={[styles.ringValue, { color: colors.text }]}>{weeklyWorkoutCount}</Text>
                       <Text style={[styles.ringUnit, { color: colors.textMuted }]}>this week</Text>
                     </View>
@@ -400,6 +413,22 @@ const DashboardScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  topGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 340,
+  },
+  ringBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#17171C',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -443,8 +472,8 @@ const styles = StyleSheet.create({
   },
   block: { paddingHorizontal: 20, marginBottom: 22 },
   ringCard: { flexDirection: 'row', alignItems: 'center' },
-  ringValue: { fontSize: 26, fontWeight: '700', letterSpacing: -0.5 },
-  ringUnit: { fontSize: 11, fontWeight: '500', marginTop: 1 },
+  ringValue: { fontSize: 22, fontWeight: '700', letterSpacing: -0.5 },
+  ringUnit: { fontSize: 10, fontWeight: '500', marginTop: 1 },
   ringLegend: { flex: 1, marginLeft: 22, gap: 18 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
